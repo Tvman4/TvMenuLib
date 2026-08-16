@@ -97,25 +97,21 @@ If you are an end-user looking to use this menu:
 
 ---
 
-## 📖 How to Use (Using Apktool)
+## 📖 Complete Decompile Tutorial: Injection, Rebuilding, and Signing
 
-This guide explains how to inject and use the compiled `libTvMenu.so` file into a Gorilla Tag fan game or clone APK using **Apktool**.
+This complete guide details the **decompile method** using Apktool to unpack your target APK, insert your native library, inject the `const-string` load hook, rebuild the application, and sign it for deployment.
 
-### 📋 Requirements
-* Java Runtime Environment (JRE) installed.
-* **Apktool** downloaded and configured in your system path.
-* A code signing tool (like **Uber APK Signer** or `apksigner`).
-* The target Gorilla Tag fan game APK file.
+### 📋 Prerequisites & Tools Needed
+* **Java Runtime Environment (JRE)**
+* **Apktool Executable (`apktool.jar`)**
+* **Uber APK Signer (`uber-apk-signer.jar`)**
+* **Target APK** & your downloaded `libTvMenu.so` file (`arm64-v8a`).
 
 ---
 
-### 🛠️ Step-by-Step Injection Guide with Apktool
-
-#### Step 1: Download the Binary
-1. Go directly to the **Releases page** of this repository.
-2. Download the compiled `libTvMenu.so` file.
-
-#### Step 2: Decode the APK using Apktool
-Open your command prompt or terminal and run the following command to decode your target APK:
-```bash
-apktool d target_game.apk -o decoded_game
+### 🛠️ Step 1: Decompile the APK
+1. Place `apktool.jar`, your target game APK, and your `libTvMenu.so` file in a dedicated workspace folder on your computer.
+2. Open your command prompt or terminal in that workspace directory.
+3. Execute the **decompile** command to unpack the APK:
+   ```bash
+   java -jar apktool.jar d target_game.apk -o decoded_game
