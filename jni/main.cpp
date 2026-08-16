@@ -1,5 +1,7 @@
 #include <jni.h>
 #include <android/log.h>
+#include <unistd.h>
+#include <pthread.h>
 #include "Menu.h"
 
 #define TAG "TvMenu"
