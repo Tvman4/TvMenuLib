@@ -1,0 +1,34 @@
+name: Build TvMenu Android .so
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build Native Library
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v3
+      with:
+        ndk-version: r25b
+        add-to-path: true
+
+    - name: Compile Library with NDK
+      run: |
+        ndk-build -C jni
+
+    - name: Upload Compiled .so Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: TvMenu-Binaries
+        path: |
+          libs/armeabi-v7a/libTvMenu.so
+          libs/arm64-v8a/libTvMenu.so
