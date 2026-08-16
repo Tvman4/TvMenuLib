@@ -94,3 +94,39 @@ If you are an end-user looking to use this menu:
 1. **Do not fork or clone this repository.**
 2. Go directly to the **Releases page** of this repository.
 3. Download the compiled `libTvMenu.so` file ready for injection into your target APK.
+
+---
+
+## 📖 How to Use
+
+This guide explains how to inject and use the compiled `libTvMenu.so` file into a Gorilla Tag fan game or clone APK.
+
+### 📋 Requirements
+* A target Android APK file (Gorilla Tag fan game/clone).
+* An APK editor or decompilation tool (e.g., **APK Easy Tool**, **MT Manager**, or **APKTool M**).
+* A signing tool or keystore to sign the modified APK.
+* An Android device or emulator with developer options and USB debugging enabled.
+
+### 🛠️ Step-by-Step Injection Guide
+
+#### Step 1: Download the Binary
+1. Go directly to the **Releases page** of this repository.
+2. Download the compiled `libTvMenu.so` file (make sure you grab the correct architecture, usually `arm64-v8a` for modern devices).
+
+#### Step 2: Decompile the Target APK
+1. Open your APK management tool (like MT Manager or APK Easy Tool).
+2. Select your target Gorilla Tag fan game APK and choose **Decompile** / **Extract** (or view contents).
+
+#### Step 3: Place the `.so` File
+1. Navigate inside the decompiled folder to the **`lib`** directory:
+   `lib/arm64-v8a/` (or `lib/armeabi-v7a/` depending on your target app's architecture).
+2. Paste the downloaded `libTvMenu.so` file into this folder alongside any existing native libraries.
+
+#### Step 4: Hook the Library (If Not Auto-Loaded)
+* *Note: Many menu bases automatically load via `JNI_OnLoad`, but some APKs require a smali hook.*
+* If needed, open the main entry point activity (usually found in `smali/com/.../unity/player/UnityPlayerActivity.smali` or similar) and add a static load call inside the onCreate or static constructor block:
+  ```smali
+  invoke-static {v0}, Ljava/lang/System;->loadLibrary(Ljava/lang/String;)V
+  # Load TvMenu
+  const-string v0, "TvMenu"
+  invoke-static {v0}, Ljava/lang/System;->loadLibrary(Ljava/lang/String;)V
