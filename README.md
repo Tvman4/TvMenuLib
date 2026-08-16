@@ -97,36 +97,25 @@ If you are an end-user looking to use this menu:
 
 ---
 
-## 📖 How to Use
+## 📖 How to Use (Using Apktool)
 
-This guide explains how to inject and use the compiled `libTvMenu.so` file into a Gorilla Tag fan game or clone APK.
+This guide explains how to inject and use the compiled `libTvMenu.so` file into a Gorilla Tag fan game or clone APK using **Apktool**.
 
 ### 📋 Requirements
-* A target Android APK file (Gorilla Tag fan game/clone).
-* An APK editor or decompilation tool (e.g., **APK Easy Tool**, **MT Manager**, or **APKTool M**).
-* A signing tool or keystore to sign the modified APK.
-* An Android device or emulator with developer options and USB debugging enabled.
+* Java Runtime Environment (JRE) installed.
+* **Apktool** downloaded and configured in your system path.
+* A code signing tool (like **Uber APK Signer** or `apksigner`).
+* The target Gorilla Tag fan game APK file.
 
-### 🛠️ Step-by-Step Injection Guide
+---
+
+### 🛠️ Step-by-Step Injection Guide with Apktool
 
 #### Step 1: Download the Binary
 1. Go directly to the **Releases page** of this repository.
-2. Download the compiled `libTvMenu.so` file (make sure you grab the correct architecture, usually `arm64-v8a` for modern devices).
+2. Download the compiled `libTvMenu.so` file.
 
-#### Step 2: Decompile the Target APK
-1. Open your APK management tool (like MT Manager or APK Easy Tool).
-2. Select your target Gorilla Tag fan game APK and choose **Decompile** / **Extract** (or view contents).
-
-#### Step 3: Place the `.so` File
-1. Navigate inside the decompiled folder to the **`lib`** directory:
-   `lib/arm64-v8a/` (or `lib/armeabi-v7a/` depending on your target app's architecture).
-2. Paste the downloaded `libTvMenu.so` file into this folder alongside any existing native libraries.
-
-#### Step 4: Hook the Library (If Not Auto-Loaded)
-* *Note: Many menu bases automatically load via `JNI_OnLoad`, but some APKs require a smali hook.*
-* If needed, open the main entry point activity (usually found in `smali/com/.../unity/player/UnityPlayerActivity.smali` or similar) and add a static load call inside the onCreate or static constructor block:
-  ```smali
-  invoke-static {v0}, Ljava/lang/System;->loadLibrary(Ljava/lang/String;)V
-  # Load TvMenu
-  const-string v0, "TvMenu"
-  invoke-static {v0}, Ljava/lang/System;->loadLibrary(Ljava/lang/String;)V
+#### Step 2: Decode the APK using Apktool
+Open your command prompt or terminal and run the following command to decode your target APK:
+```bash
+apktool d target_game.apk -o decoded_game
