@@ -6,8 +6,8 @@
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
 bool Menu::isOpen = false;
+bool Menu::notificationsEnabled = true;
 
-// Mocked structural variables for hand tracking & input state
 static float handPosX = 0.0f, handPosY = 0.0f, handPosZ = 0.0f;
 static bool yButtonPreviouslyPressed = false;
 
@@ -15,25 +15,26 @@ void Menu::InitMenu() {
     LOGI("TvMenu UI System Initialized.");
 }
 
+void Menu::ShowNotification(std::string message) {
+    if (notificationsEnabled) {
+        LOGI("[NOTIFICATION] %s", message.c_str());
+        // In a full ImGui setup, this pushes a toast notification onto the rendered hand overlay screen.
+    }
+}
+
 bool Menu::CheckYButtonInput() {
-    // In a full implementation, you poll the VR input API (e.g., OVR / OpenXR input state for Controller Button Y)
-    // Here we use a boolean toggle placeholder framework for the input check:
-    bool currentYState = false; // Replace with actual controller state query: e.g., Input.GetButton("YButton")
-    
+    bool currentYState = false; // Replace with actual controller query
     if (currentYState && !yButtonPreviouslyPressed) {
         isOpen = !isOpen;
-        LOGI("Y Button Pressed: Menu Toggle State -> %s", isOpen ? "OPEN" : "CLOSED");
+        ShowNotification(isOpen ? "Menu Opened" : "Menu Closed");
     }
     yButtonPreviouslyPressed = currentYState;
     return isOpen;
 }
 
 void Menu::UpdateHandPosition() {
-    // Track left or right hand palm/controller transform matrix and update coordinates
-    // When the menu is open, its anchor coordinates lock onto these hand bounds.
     if (isOpen) {
-        // Example: Update menu UI transform matrix to match hand position vectors
-        handPosX = 0.1f; // Offset relative to hand
+        handPosX = 0.1f;
         handPosY = -0.05f;
         handPosZ = 0.3f;
     }
@@ -44,8 +45,5 @@ void Menu::RenderUI() {
     UpdateHandPosition();
 
     if (!isOpen) return;
-
-    // OpenGL / ImGui Render loop placeholder anchored to hand position
-    // Draw background panel at (handPosX, handPosY, handPosZ)
-    // Draw categories & features (Movement, Visuals, Trolling, etc.)
+    // Render code anchored to hand position
 }
