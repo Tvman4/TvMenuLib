@@ -8,6 +8,12 @@
 void* hack_thread(void*) {
     LOGI("TvMenu initialized successfully!");
     Menu::InitMenu();
+    
+    // Main execution loop for monitoring inputs and rendering
+    while (true) {
+        Menu::RenderUI();
+        usleep(10000); // ~100 FPS check interval
+    }
     return nullptr;
 }
 
