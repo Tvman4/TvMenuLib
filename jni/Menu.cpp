@@ -1,8 +1,6 @@
 #include "Menu.h"
 #include <android/log.h>
 #include <GLES2/gl2.h>
-// Include ImGui header so ImVec4 is recognized
-#include "imgui.h" 
 
 #define TAG "TvMenu"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
@@ -12,10 +10,15 @@ bool Menu::notificationsEnabled = true;
 
 static float handPosX = 0.0f, handPosY = 0.0f, handPosZ = 0.0f;
 
+// Custom Color structure to avoid needing imgui.h
+struct Color {
+    float r, g, b, a;
+};
+
 // Blood Red Theme Color Definition
-static ImVec4 bloodRedActive = ImVec4(0.85f, 0.0f, 0.0f, 1.0f);
-static ImVec4 bloodRedHover = ImVec4(1.0f, 0.1f, 0.1f, 1.0f);
-static ImVec4 bloodRedBg = ImVec4(0.15f, 0.0f, 0.0f, 0.9f);
+static Color bloodRedActive = {0.85f, 0.0f, 0.0f, 1.0f};
+static Color bloodRedHover = {1.0f, 0.1f, 0.1f, 1.0f};
+static Color bloodRedBg = {0.15f, 0.0f, 0.0f, 0.9f};
 
 void Menu::InitMenu() {
     LOGI("TvMenu UI System Initialized with Blood Red Theme.");
@@ -58,13 +61,5 @@ void Menu::RenderUI() {
     UpdateHandPosition();
 
     if (!isOpen) return;
-
-    // Apply Blood Red Theme Styling
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.Colors[ImGuiCol_Button] = bloodRedBg;
-    style.Colors[ImGuiCol_ButtonHovered] = bloodRedHover;
-    style.Colors[ImGuiCol_ButtonActive] = bloodRedActive;
-    style.Colors[ImGuiCol_Header] = bloodRedBg;
-    style.Colors[ImGuiCol_HeaderHovered] = bloodRedHover;
-    style.Colors[ImGuiCol_HeaderActive] = bloodRedActive;
+    // Render code anchored to hand position
 }
