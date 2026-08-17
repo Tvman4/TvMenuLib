@@ -1,6 +1,8 @@
 #include "Menu.h"
 #include <android/log.h>
 #include <GLES2/gl2.h>
+// Include ImGui header so ImVec4 is recognized
+#include "imgui.h" 
 
 #define TAG "TvMenu"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
@@ -26,11 +28,8 @@ void Menu::ShowNotification(std::string message) {
 }
 
 bool Menu::CheckYButtonInput() {
-    // Replace with your actual controller input query for holding down the Y button
     bool isHoldingY = false; 
 
-    // When you press and hold Y, the menu is open/attached to the hand.
-    // The moment you stop holding Y (isHoldingY becomes false), it closes/drops.
     if (isHoldingY) {
         if (!isOpen) {
             isOpen = true;
@@ -48,7 +47,6 @@ bool Menu::CheckYButtonInput() {
 
 void Menu::UpdateHandPosition() {
     if (isOpen) {
-        // Automatically updates coordinates to match your hand transform matrices
         handPosX = 0.1f;
         handPosY = -0.05f;
         handPosZ = 0.3f;
@@ -61,8 +59,7 @@ void Menu::RenderUI() {
 
     if (!isOpen) return;
 
-    // Apply Blood Red Theme Styling if using ImGui
-    /*
+    // Apply Blood Red Theme Styling
     ImGuiStyle& style = ImGui::GetStyle();
     style.Colors[ImGuiCol_Button] = bloodRedBg;
     style.Colors[ImGuiCol_ButtonHovered] = bloodRedHover;
@@ -70,7 +67,4 @@ void Menu::RenderUI() {
     style.Colors[ImGuiCol_Header] = bloodRedBg;
     style.Colors[ImGuiCol_HeaderHovered] = bloodRedHover;
     style.Colors[ImGuiCol_HeaderActive] = bloodRedActive;
-    */
-
-    // Render code anchored to hand position coordinates (handPosX, handPosY, handPosZ)
 }
