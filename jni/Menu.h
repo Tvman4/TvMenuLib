@@ -10,5 +10,6 @@ public:
     static void RenderUI();
     static bool CheckYButtonInput();
     static void UpdateHandPosition();
+    static void CheckPointerInteraction(); // Added declaration
     static void ShowNotification(std::string message);
 };
