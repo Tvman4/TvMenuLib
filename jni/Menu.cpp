@@ -1,6 +1,7 @@
 #include "Menu.h"
 #include "Mods.h"
 #include <android/log.h>
+#include <map>
 
 #define TAG "TvMenuQuest"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
@@ -10,7 +11,10 @@ bool TvMenuQuest::notificationsEnabled = true;
 int TvMenuQuest::currentCategoryIndex = 0;
 int TvMenuQuest::selectedModIndex = 0;
 
-const std::string TvMenuQuest::menuTitle = "=== TvMenuQuest (Quest Standalone Edition) ===";
+// Track active states for mods to make them glow bright red when turned on
+static std::map<std::string, bool> activeModStates;
+
+const std::string TvMenuQuest::menuTitle = "=== TvMenuQuest [Blood Red Theme #8B0000] ===";
 
 const std::vector<Category> TvMenuQuest::categories = {
     {"🏃 Movement Mods", {
@@ -70,7 +74,7 @@ const std::vector<Category> TvMenuQuest::categories = {
         "Tiny Scale Mode", "World Texture Swap", "Day/Night Fast Cycle"
     }},
     {"⚙️ Settings & Menu Controls", {
-        "Menu Customizer (Theme/Colors)", "Keybind Editor", "Toggle Notifications", 
+        "Menu Customizer (Bright Red Highlight)", "Keybind Editor", "Toggle Notifications", 
         "Save Config", "Disable Menu Sounds", "FPS Limiter", "Menu Sound Effects Volume", 
         "Auto-Load Config on Startup", "Menu Transparency / Opacity", 
         "Controller Vibration Toggle", "Menu Layout Position Switcher", 
@@ -99,12 +103,12 @@ const std::vector<Category> TvMenuQuest::categories = {
 };
 
 void TvMenuQuest::InitMenu() {
-    LOGI("%s Initialized successfully.", menuTitle.c_str());
+    LOGI("%s Initialized with Bright Red Highlighting System.", menuTitle.c_str());
 }
 
 void TvMenuQuest::ShowNotification(std::string message) {
     if (notificationsEnabled) {
-        LOGI("[NOTIFICATION] %s", message.c_str());
+        LOGI("[BRIGHT RED NOTIFICATION] %s", message.c_str());
     }
 }
 
@@ -135,10 +139,28 @@ void TvMenuQuest::ScrollRight() {
 
 void TvMenuQuest::SelectCurrentMod() {
     std::string modName = categories[currentCategoryIndex].mods[selectedModIndex];
-    Mods::ExecuteUniversalMod(modName, true);
+    
+    // Toggle active state and switch to bright red (#FF0000) when active
+    bool newState = !activeModStates[modName];
+    activeModStates[modName] = newState;
+
+    Mods::ExecuteUniversalMod(modName, newState);
+
+    if (newState) {
+        LOGI("[UI HIGHLIGHT] 🔴 TOGGLED ON [BRIGHT RED #FF0000]: %s", modName.c_str());
+    } else {
+        LOGI("[UI HIGHLIGHT] ⚪ TOGGLED OFF: %s", modName.c_str());
+    }
 }
 
 void TvMenuQuest::RenderUI() {
     const auto& cat = categories[currentCategoryIndex];
-    LOGI("%s | Category: [%s] | Selected Mod: [%s]", menuTitle.c_str(), cat.name.c_str(), cat.mods[selectedModIndex].c_str());
+    std::string currentMod = cat.mods[selectedModIndex];
+    bool isEnabled = activeModStates[currentMod];
+
+    LOGI("%s | Category: [%s] | 🌟 [HIGHLIGHTED] -> [%s] | State: %s", 
+        menuTitle.c_str(), 
+        cat.name.c_str(), 
+        currentMod.c_str(), 
+        isEnabled ? "[ON - BRIGHT RED #FF0000]" : "[OFF]");
 }
