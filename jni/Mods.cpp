@@ -57,7 +57,7 @@ namespace Mods {
     void MaterialChanger(bool enabled) { LOGI("Material Changer: %s", enabled ? "ON" : "OFF"); }
     void CustomHoldables(bool enabled) { LOGI("Custom Holdables: %s", enabled ? "ON" : "OFF"); }
     void BadgeUnlocker(bool enabled) { LOGI("Badge Unlocker: %s", enabled ? "ON" : "OFF"); }
-    void FakeHandPainter(bool enabled) { LOGI("Fake Hand Painter: %s", enabled ? "ON" : "OFF"); }
+    void FakeFingerPainter(bool enabled) { LOGI("Fake Finger Painter: %s", enabled ? "ON" : "OFF"); }
 
     // World & Fun Mods
     void TeleportToPlayers(bool enabled) { LOGI("Teleport Players: %s", enabled ? "ON" : "OFF"); }
