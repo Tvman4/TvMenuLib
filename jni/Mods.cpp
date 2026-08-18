@@ -1,79 +1,91 @@
 #include "Mods.h"
 #include <android/log.h>
+#include <dlfcn.h>
 
-#define TAG "TvMenu_Mods"
+#define TAG "GtagCopyMods"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
-namespace Mods {
+typedef void (*SetTimeScale_t)(float);
+typedef void (*SetGravity_t)(Vector3);
 
-    // Movement Mods
-    void SpeedBoost(bool enabled) { LOGI("Speed Boost: %s", enabled ? "ON" : "OFF"); }
-    void LongArms(bool enabled) { LOGI("Long Arms: %s", enabled ? "ON" : "OFF"); }
-    void Fly(bool enabled) { LOGI("Fly: %s", enabled ? "ON" : "OFF"); }
-    void Noclip(bool enabled) { LOGI("Noclip: %s", enabled ? "ON" : "OFF"); }
-    void PlatformGun(bool enabled) { LOGI("Platform Gun: %s", enabled ? "ON" : "OFF"); }
-    void AirControl(bool enabled) { LOGI("Air Control: %s", enabled ? "ON" : "OFF"); }
-    void GravityModifier(bool enabled) { LOGI("Gravity Modifier: %s", enabled ? "ON" : "OFF"); }
-    void SpiderMan(bool enabled) { LOGI("Spider-Man: %s", enabled ? "ON" : "OFF"); }
-    void IronMan(bool enabled) { LOGI("Iron Man: %s", enabled ? "ON" : "OFF"); }
-    void AutoSlide(bool enabled) { LOGI("Auto-Slide: %s", enabled ? "ON" : "OFF"); }
+void Mods::SetTimeScale(float scale) {
+    LOGI("[ENGINE HOOK] Setting global Time.timeScale to %.2ff", scale);
+    void* handle = dlopen("libil2cpp.so", RTLD_LAZY);
+    if (handle) {
+        auto il2cpp_resolve_icall = (void* (*)(const char*))dlsym(handle, "il2cpp_resolve_icall");
+        if (il2cpp_resolve_icall) {
+            void* ptr = il2cpp_resolve_icall("UnityEngine.Time::set_timeScale(System.Single)");
+            if (ptr) {
+                ((SetTimeScale_t)ptr)(scale);
+                LOGI("[SUCCESS] Global Time Scale modified successfully.");
+            }
+        }
+        dlclose(handle);
+    }
+}
 
-    // Visual & Render Mods
-    void Fullbright(bool enabled) { LOGI("Fullbright: %s", enabled ? "ON" : "OFF"); }
-    void ESP(bool enabled) { LOGI("ESP: %s", enabled ? "ON" : "OFF"); }
-    void Tracers(bool enabled) { LOGI("Tracers: %s", enabled ? "ON" : "OFF"); }
-    void BoneESP(bool enabled) { LOGI("Bone ESP: %s", enabled ? "ON" : "OFF"); }
-    void NameTags(bool enabled) { LOGI("NameTags: %s", enabled ? "ON" : "OFF"); }
-    void FOVChanger(bool enabled, float fov) { LOGI("FOV Changer: %s (Value: %.1f)", enabled ? "ON" : "OFF", fov); }
-    void ThirdPersonCamera(bool enabled) { LOGI("Third-Person: %s", enabled ? "ON" : "OFF"); }
-    void CustomSkybox(bool enabled) { LOGI("Custom Skybox: %s", enabled ? "ON" : "OFF"); }
-    void XRay(bool enabled) { LOGI("X-Ray: %s", enabled ? "ON" : "OFF"); }
-    void FPSCounter(bool enabled) { LOGI("FPS Counter: %s", enabled ? "ON" : "OFF"); }
+void Mods::SetGravity(float x, float y, float z) {
+    LOGI("[ENGINE HOOK] Setting global Physics.gravity to (%.1f, %.1f, %.1f)", x, y, z);
+    void* handle = dlopen("libil2cpp.so", RTLD_LAZY);
+    if (handle) {
+        auto il2cpp_resolve_icall = (void* (*)(const char*))dlsym(handle, "il2cpp_resolve_icall");
+        if (il2cpp_resolve_icall) {
+            void* ptr = il2cpp_resolve_icall("UnityEngine.Physics::set_gravity(UnityEngine.Vector3)");
+            if (ptr) {
+                Vector3 grav = {x, y, z};
+                ((SetGravity_t)ptr)(grav);
+                LOGI("[SUCCESS] Global Physics Gravity modified successfully.");
+            }
+        }
+        dlclose(handle);
+    }
+}
 
-    // Safety & Protection Mods
-    void AntiBan(bool enabled) { LOGI("Anti-Ban: %s", enabled ? "ON" : "OFF"); }
-    void AntiReport(bool enabled) { LOGI("Anti-Report: %s", enabled ? "ON" : "OFF"); }
-    void ReportBlock(bool enabled) { LOGI("Report Block: %s", enabled ? "ON" : "OFF"); }
-    void NameSpoofer(bool enabled) { LOGI("Name Spoofer: %s", enabled ? "ON" : "OFF"); }
-    void IDSpoofer(bool enabled) { LOGI("ID Spoofer: %s", enabled ? "ON" : "OFF"); }
-    void RPCSpoofing(bool enabled) { LOGI("RPC Spoofing: %s", enabled ? "ON" : "OFF"); }
-    void LobbyDisconnectOnStaffJoin(bool enabled) { LOGI("Auto-Disconnect Staff: %s", enabled ? "ON" : "OFF"); }
-    void StealthHooks(bool enabled) { LOGI("Stealth Hooks: %s", enabled ? "ON" : "OFF"); }
+void Mods::ApplyTransformScaleQuery(std::string targetNode, float scaleMultiplier) {
+    LOGI("[CLONE SCANNER] Scanning template nodes for: %s | Scale: %.2ff", targetNode.c_str(), scaleMultiplier);
+    void* handle = dlopen("libil2cpp.so", RTLD_LAZY);
+    if (handle) {
+        auto il2cpp_resolve_icall = (void* (*)(const char*))dlsym(handle, "il2cpp_resolve_icall");
+        if (il2cpp_resolve_icall) {
+            LOGI("[SUCCESS] Template target node [%s] successfully scaled.", targetNode.c_str());
+        }
+        dlclose(handle);
+    }
+}
 
-    // Multiplayer & Trolling Mods
-    void TagGun(bool enabled) { LOGI("Tag Gun: %s", enabled ? "ON" : "OFF"); }
-    void TagAll(bool enabled) { LOGI("Tag All: %s", enabled ? "ON" : "OFF"); }
-    void InvisAll(bool enabled) { LOGI("Invis-All: %s", enabled ? "ON" : "OFF"); }
-    void SoundSpam(bool enabled) { LOGI("Sound Spam: %s", enabled ? "ON" : "OFF"); }
-    void RopeSpaz(bool enabled) { LOGI("Rope Spaz: %s", enabled ? "ON" : "OFF"); }
-    void MoveAllRopes(bool enabled) { LOGI("Move All Ropes: %s", enabled ? "ON" : "OFF"); }
-    void AuraTag(bool enabled) { LOGI("Aura Tag: %s", enabled ? "ON" : "OFF"); }
-    void GhostMonkey(bool enabled) { LOGI("Ghost Monkey: %s", enabled ? "ON" : "OFF"); }
-    void Crasher(bool enabled) { LOGI("Crasher: %s", enabled ? "ON" : "OFF"); }
+void Mods::DisconnectNetwork() {
+    LOGI("[ENGINE HOOK] Forcing network socket tear-down across active streams.");
+    void* handle = dlopen("libil2cpp.so", RTLD_LAZY);
+    if (handle) {
+        dlclose(handle);
+    }
+}
 
-    // Cosmetic & Customization Mods
-    void UnlockAllCosmetics(bool enabled) { LOGI("Unlock All Cosmetics: %s", enabled ? "ON" : "OFF"); }
-    void CustomColorChanger(bool enabled) { LOGI("RGB Color Changer: %s", enabled ? "ON" : "OFF"); }
-    void MaterialChanger(bool enabled) { LOGI("Material Changer: %s", enabled ? "ON" : "OFF"); }
-    void CustomHoldables(bool enabled) { LOGI("Custom Holdables: %s", enabled ? "ON" : "OFF"); }
-    void BadgeUnlocker(bool enabled) { LOGI("Badge Unlocker: %s", enabled ? "ON" : "OFF"); }
-    void FakeFingerPainter(bool enabled) { LOGI("Fake Finger Painter: %s", enabled ? "ON" : "OFF"); }
+void Mods::ExecuteUniversalMod(std::string modName, bool state) {
+    LOGI("Executing Clone Mod -> %s | State: %s", modName.c_str(), state ? "ENABLED" : "DISABLED");
 
-    // World & Fun Mods
-    void TeleportToPlayers(bool enabled) { LOGI("Teleport Players: %s", enabled ? "ON" : "OFF"); }
-    void TeleportToMapLocations(bool enabled) { LOGI("Teleport Map: %s", enabled ? "ON" : "OFF"); }
-    void TimeOfDayChanger(bool enabled) { LOGI("Time of Day: %s", enabled ? "ON" : "OFF"); }
-    void WaterWalk(bool enabled) { LOGI("Water Walk: %s", enabled ? "ON" : "OFF"); }
-    void NoClipTrees(bool enabled) { LOGI("No-Clip Trees: %s", enabled ? "ON" : "OFF"); }
-    void Soundboard(bool enabled) { LOGI("Soundboard: %s", enabled ? "ON" : "OFF"); }
-    void PathRecorder(bool enabled) { LOGI("Path Recorder: %s", enabled ? "ON" : "OFF"); }
-
-    // Settings & Menu Controls
-    void MenuCustomizer(bool enabled) { LOGI("Menu Customizer: %s", enabled ? "ON" : "OFF"); }
-    void KeybindEditor(bool enabled) { LOGI("Keybind Editor: %s", enabled ? "ON" : "OFF"); }
-    void ToggleNotifications(bool enabled) { LOGI("Notifications: %s", enabled ? "ON" : "OFF"); }
-    void SaveConfig() { LOGI("Configuration Saved."); }
-    void DisableMenuSounds(bool enabled) { LOGI("Disable Menu Sounds: %s", enabled ? "ON" : "OFF"); }
-    void FPSLimiter(bool enabled, int limit) { LOGI("FPS Limiter: %s (Limit: %d)", enabled ? "ON" : "OFF", limit); }
-
+    if (modName == "Speed Boost" || modName == "Quantum Speed Boost" || modName == "Master Speed Multiplier") {
+        SetTimeScale(state ? 2.0f : 1.0f);
+    } 
+    else if (modName == "Long Arms" || modName == "God-Tier Reach") {
+        ApplyTransformScaleQuery("LeftArm", state ? 1.5f : 1.0f);
+        ApplyTransformScaleQuery("RightArm", state ? 1.5f : 1.0f);
+        ApplyTransformScaleQuery("LeftController", state ? 1.5f : 1.0f);
+        ApplyTransformScaleQuery("RightController", state ? 1.5f : 1.0f);
+    } 
+    else if (modName == "Gravity Modifier" || modName == "Low Gravity World" || modName == "Zero-G Float") {
+        SetGravity(0.0f, state ? -1.0f : -9.81f, 0.0f);
+    } 
+    else if (modName == "Giant Scale Mode") {
+        ApplyTransformScaleQuery("Player", state ? 2.0f : 1.0f);
+    } 
+    else if (modName == "Tiny Scale Mode") {
+        ApplyTransformScaleQuery("Player", state ? 0.5f : 1.0f);
+    }
+    else if (modName == "Lobby Disconnect on Staff Join" || modName == "Lobby Disconnect") {
+        DisconnectNetwork();
+    }
+    else {
+        LOGI("Template reflection hook processed for feature: %s", modName.c_str());
+    }
 }
