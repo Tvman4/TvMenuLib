@@ -1,4 +1,4 @@
-```text
+
 # TvMenu - Gorilla Tag Fan Game Mod Menu
 
 Welcome to TvMenu, a feature-rich, open-source native mod menu written in C++ designed specifically for Android-based Gorilla Tag fan games and clones. 
