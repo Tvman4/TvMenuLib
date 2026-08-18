@@ -4,23 +4,23 @@
 #include <pthread.h>
 #include "Menu.h"
 
-#define TAG "TvMenu"
+#define TAG "GtagCopyMain"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
-void* hack_thread(void*) {
-    LOGI("TvMenu initialized successfully!");
+void* engine_loop(void*) {
+    LOGI("Gtag Copy Engine Loop Active across Unity 2019-2022 LTS.");
     Menu::InitMenu();
     
-    // Main execution loop for monitoring inputs and rendering
     while (true) {
         Menu::RenderUI();
-        usleep(10000); // ~100 FPS check interval
+        usleep(50000); // 20 FPS heartbeat loop
     }
     return nullptr;
 }
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     pthread_t pt;
-    pthread_create(&pt, nullptr, hack_thread, nullptr);
+    pthread_create(&pt, nullptr, engine_loop, nullptr);
+    LOGI("Library successfully injected and hooked via JNI_OnLoad.");
     return JNI_VERSION_1_6;
 }
