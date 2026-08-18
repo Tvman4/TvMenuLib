@@ -2,15 +2,17 @@
 #include "Mods.h"
 #include <android/log.h>
 
-#define TAG "GtagCopyMenu"
+#define TAG "TvMenuQuest"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
-bool Menu::isOpen = true;
-bool Menu::notificationsEnabled = true;
-int Menu::currentCategoryIndex = 0;
-int Menu::selectedModIndex = 0;
+bool TvMenuQuest::isOpen = true;
+bool TvMenuQuest::notificationsEnabled = true;
+int TvMenuQuest::currentCategoryIndex = 0;
+int TvMenuQuest::selectedModIndex = 0;
 
-const std::vector<Category> Menu::categories = {
+const std::string TvMenuQuest::menuTitle = "=== TvMenuQuest (Quest Standalone Edition) ===";
+
+const std::vector<Category> TvMenuQuest::categories = {
     {"🏃 Movement Mods", {
         "Speed Boost", "Long Arms", "Fly", "Noclip", "Platform Gun", 
         "Air Control", "Gravity Modifier", "Spider-Man (Wall Climb Boost)", 
@@ -96,22 +98,22 @@ const std::vector<Category> Menu::categories = {
     }}
 };
 
-void Menu::InitMenu() {
-    LOGI("Gtag Copy Menu Initialized successfully.");
+void TvMenuQuest::InitMenu() {
+    LOGI("%s Initialized successfully.", menuTitle.c_str());
 }
 
-void Menu::ShowNotification(std::string message) {
+void TvMenuQuest::ShowNotification(std::string message) {
     if (notificationsEnabled) {
         LOGI("[NOTIFICATION] %s", message.c_str());
     }
 }
 
-void Menu::DisconnectLobbyGlobal() {
+void TvMenuQuest::DisconnectLobbyGlobal() {
     LOGI("[QUICK ACTION] Emergency Disconnect Triggered.");
     Mods::ExecuteUniversalMod("Lobby Disconnect on Staff Join", true);
 }
 
-void Menu::ScrollLeft() {
+void TvMenuQuest::ScrollLeft() {
     if (currentCategoryIndex > 0) {
         currentCategoryIndex--;
     } else {
@@ -121,7 +123,7 @@ void Menu::ScrollLeft() {
     ShowNotification("Tab Left: " + categories[currentCategoryIndex].name);
 }
 
-void Menu::ScrollRight() {
+void TvMenuQuest::ScrollRight() {
     if (currentCategoryIndex < categories.size() - 1) {
         currentCategoryIndex++;
     } else {
@@ -131,12 +133,12 @@ void Menu::ScrollRight() {
     ShowNotification("Tab Right: " + categories[currentCategoryIndex].name);
 }
 
-void Menu::SelectCurrentMod() {
+void TvMenuQuest::SelectCurrentMod() {
     std::string modName = categories[currentCategoryIndex].mods[selectedModIndex];
     Mods::ExecuteUniversalMod(modName, true);
 }
 
-void Menu::RenderUI() {
+void TvMenuQuest::RenderUI() {
     const auto& cat = categories[currentCategoryIndex];
-    LOGI("Active Category: [%s] | Selected Mod: [%s]", cat.name.c_str(), cat.mods[selectedModIndex].c_str());
+    LOGI("%s | Category: [%s] | Selected Mod: [%s]", menuTitle.c_str(), cat.name.c_str(), cat.mods[selectedModIndex].c_str());
 }
