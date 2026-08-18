@@ -1,3 +1,4 @@
+```text
 # TvMenu - Gorilla Tag Fan Game Mod Menu
 
 Welcome to TvMenu, a feature-rich, open-source native mod menu written in C++ designed specifically for Android-based Gorilla Tag fan games and clones. 
@@ -133,3 +134,34 @@ To ensure the game loads your menu library automatically upon launch, inject the
 2. Open the file in any text editor (like Notepad or Notepad++) and search for the onCreate method declaration:
    ```smali
    .method protected onCreate(Landroid/os/Bundle;)V
+
+```
+ 3. Locate the super.onCreate instruction. Right underneath it, copy and paste this exact architecture-matching const-string Smali block:
+   ```smali
+   const-string v0, "TvMenu-arm64-v8a"
+   
+   invoke-static {v0}, Ljava/lang/System;->loadLibrary(Ljava/lang/String;)V
+   
+   ```
+   *(Note: If compiling for ARMv7, use const-string v0, "TvMenu-armeabi-v7a" instead).*
+ 4. Save and close the file.
+### 🛠️ Step 4: Rebuilding the APK using Apktool
+ 1. Return to your open Apktool application window.
+ 2. Select your modified folder and click the Build / Compile button to pack everything back into an unsigned APK file (e.g., modded_unsigned.apk).
+### 🛠️ Step 5: Signing the APK
+Android requires all installed APKs to be cryptographically signed.
+ 1. Place your uber-apk-signer.jar file in your workspace directory.
+ 2. Open your terminal/command prompt strictly for signing, and run the signing command:
+   ```bash
+   java -jar uber-apk-signer.jar --apks modded_unsigned.apk
+   
+   ```
+ 3. The tool will sign the build automatically and output your final installable file:
+   modded_unsigned-aligned-debugSigned.apk.
+### 🎮 In-Game Controls
+ 1. Uninstall any existing version of the game from your device to prevent signature conflicts.
+ 2. Install your newly signed modded APK (modded_unsigned-aligned-debugSigned.apk).
+ 3. Open the game, hold the **Y** button on your controller, use your pointer dot, and your blood-red menu will appear right on your hand ready for action!
+```
+
+```
