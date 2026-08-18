@@ -1,11 +1,15 @@
 #pragma once
-#include <jni.h>
+#include <string>
 
-class Menu {
+struct Vector3 {
+    float x, y, z;
+};
+
+class Mods {
 public:
-    static bool isOpen;
-    static void InitMenu();
-    static void RenderUI();
-    static bool CheckYButtonInput();
-    static void UpdateHandPosition();
+    static void ExecuteUniversalMod(std::string modName, bool state);
+    static void SetTimeScale(float scale);
+    static void SetGravity(float x, float y, float z);
+    static void ApplyTransformScaleQuery(std::string targetNode, float scaleMultiplier);
+    static void DisconnectNetwork();
 };
