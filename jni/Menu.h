@@ -8,12 +8,13 @@ struct Category {
     std::vector<std::string> mods;
 };
 
-class Menu {
+class TvMenuQuest {
 public:
     static bool isOpen;
     static bool notificationsEnabled;
     static int currentCategoryIndex;
     static int selectedModIndex;
+    static const std::string menuTitle;
     static const std::vector<Category> categories;
 
     static void InitMenu();
