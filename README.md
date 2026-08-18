@@ -162,6 +162,3 @@ Android requires all installed APKs to be cryptographically signed.
  1. Uninstall any existing version of the game from your device to prevent signature conflicts.
  2. Install your newly signed modded APK (modded_unsigned-aligned-debugSigned.apk).
  3. Open the game, hold the **Y** button on your controller, use your pointer dot, and your blood-red menu will appear right on your hand ready for action!
-```
-
-```
