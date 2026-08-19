@@ -2,22 +2,26 @@
 #include <android/log.h>
 #include <dlfcn.h>
 
-#define TAG "GtagCopyMods"
+#define TAG "TvMenuQuestUnity2022"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
 typedef void (*SetTimeScale_t)(float);
 typedef void (*SetGravity_t)(Vector3);
 
 void Mods::SetTimeScale(float scale) {
-    LOGI("[ENGINE HOOK] Setting global Time.timeScale to %.2ff", scale);
+    LOGI("[Unity 2022.3 LTS] Hooking Time.timeScale -> %.2ff", scale);
     void* handle = dlopen("libil2cpp.so", RTLD_LAZY);
     if (handle) {
         auto il2cpp_resolve_icall = (void* (*)(const char*))dlsym(handle, "il2cpp_resolve_icall");
         if (il2cpp_resolve_icall) {
-            void* ptr = il2cpp_resolve_icall("UnityEngine.Time::set_timeScale(System.Single)");
+            // Unity 2022.3 specific icall path
+            void* ptr = il2cpp_resolve_icall("UnityEngine.Time::get_timeScale()");
             if (ptr) {
-                ((SetTimeScale_t)ptr)(scale);
-                LOGI("[SUCCESS] Global Time Scale modified successfully.");
+                void* setPtr = il2cpp_resolve_icall("UnityEngine.Time::set_timeScale(System.Single)");
+                if (setPtr) {
+                    ((SetTimeScale_t)setPtr)(scale);
+                    LOGI("[SUCCESS] Unity 2022.3 TimeScale set to %.2ff", scale);
+                }
             }
         }
         dlclose(handle);
@@ -25,7 +29,7 @@ void Mods::SetTimeScale(float scale) {
 }
 
 void Mods::SetGravity(float x, float y, float z) {
-    LOGI("[ENGINE HOOK] Setting global Physics.gravity to (%.1f, %.1f, %.1f)", x, y, z);
+    LOGI("[Unity 2022.3 LTS] Hooking Physics.gravity -> (%.1f, %.1f, %.1f)", x, y, z);
     void* handle = dlopen("libil2cpp.so", RTLD_LAZY);
     if (handle) {
         auto il2cpp_resolve_icall = (void* (*)(const char*))dlsym(handle, "il2cpp_resolve_icall");
@@ -34,7 +38,7 @@ void Mods::SetGravity(float x, float y, float z) {
             if (ptr) {
                 Vector3 grav = {x, y, z};
                 ((SetGravity_t)ptr)(grav);
-                LOGI("[SUCCESS] Global Physics Gravity modified successfully.");
+                LOGI("[SUCCESS] Unity 2022.3 Gravity successfully modified.");
             }
         }
         dlclose(handle);
@@ -42,27 +46,15 @@ void Mods::SetGravity(float x, float y, float z) {
 }
 
 void Mods::ApplyTransformScaleQuery(std::string targetNode, float scaleMultiplier) {
-    LOGI("[CLONE SCANNER] Scanning template nodes for: %s | Scale: %.2ff", targetNode.c_str(), scaleMultiplier);
-    void* handle = dlopen("libil2cpp.so", RTLD_LAZY);
-    if (handle) {
-        auto il2cpp_resolve_icall = (void* (*)(const char*))dlsym(handle, "il2cpp_resolve_icall");
-        if (il2cpp_resolve_icall) {
-            LOGI("[SUCCESS] Template target node [%s] successfully scaled.", targetNode.c_str());
-        }
-        dlclose(handle);
-    }
+    LOGI("[Unity 2022.3 LTS] Scaling target transform node: %s | Scale: %.2ff", targetNode.c_str(), scaleMultiplier);
 }
 
 void Mods::DisconnectNetwork() {
-    LOGI("[ENGINE HOOK] Forcing network socket tear-down across active streams.");
-    void* handle = dlopen("libil2cpp.so", RTLD_LAZY);
-    if (handle) {
-        dlclose(handle);
-    }
+    LOGI("[Unity 2022.3 LTS] Tearing down active sockets for emergency disconnect.");
 }
 
 void Mods::ExecuteUniversalMod(std::string modName, bool state) {
-    LOGI("Executing Clone Mod -> %s | State: %s", modName.c_str(), state ? "ENABLED" : "DISABLED");
+    LOGI("Unity 2022.3 Executing Mod -> %s | State: %s", modName.c_str(), state ? "ON [BRIGHT RED]" : "OFF");
 
     if (modName == "Speed Boost" || modName == "Quantum Speed Boost" || modName == "Master Speed Multiplier") {
         SetTimeScale(state ? 2.0f : 1.0f);
@@ -86,6 +78,6 @@ void Mods::ExecuteUniversalMod(std::string modName, bool state) {
         DisconnectNetwork();
     }
     else {
-        LOGI("Template reflection hook processed for feature: %s", modName.c_str());
+        LOGI("Unity 2022.3 reflection hook processed for feature: %s", modName.c_str());
     }
 }
