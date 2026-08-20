@@ -8,7 +8,7 @@
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
 void* engine_loop(void*) {
-    LOGI("TvMenuQuest Engine Loop Active – Unity 2021.3 LTS");
+    LOGI("TvMenuQuest started – Unity 2021.3 LTS");
     TvMenuQuest::InitMenu();
 
     while (true) {
@@ -23,6 +23,6 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     pthread_t pt;
     pthread_create(&pt, nullptr, engine_loop, nullptr);
     pthread_detach(pt);
-    LOGI("Library injected – Unity 2021.3 mode");
+    LOGI("TvMenuQuest .so injected");
     return JNI_VERSION_1_6;
 }
