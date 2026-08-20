@@ -8,13 +8,13 @@
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
 void* engine_loop(void*) {
-    LOGI("TvMenuQuest started – Unity 2022.3 LTS multi-copy mode");
+    LOGI("TvMenuQuest started – Long Arms world-scale mode active");
     TvMenuQuest::InitMenu();
 
     while (true) {
-        TvMenuQuest::UpdateInput();   // Controller polling
+        TvMenuQuest::UpdateInput();
         TvMenuQuest::RenderUI();
-        usleep(16000);                // ~60 FPS
+        usleep(16000);
     }
     return nullptr;
 }
