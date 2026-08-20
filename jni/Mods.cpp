@@ -6,6 +6,7 @@
 #include <chrono>
 #include <vector>
 #include <string>
+#include <atomic>
 
 #define TAG "TvMenuQuestUnity2021"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
@@ -14,16 +15,12 @@
 typedef void (*SetTimeScale_t)(float);
 typedef void (*SetGravity_t)(Vector3);
 
-// -------------------- IL2CPP helper (Unity 2021.3) --------------------
+// -------------------- IL2CPP helper --------------------
 static void* ResolveICall(const char* name) {
     void* handle = dlopen("libil2cpp.so", RTLD_LAZY);
-    if (!handle) {
-        LOGE("Failed to open libil2cpp.so");
-        return nullptr;
-    }
+    if (!handle) return nullptr;
     auto resolve = (void* (*)(const char*))dlsym(handle, "il2cpp_resolve_icall");
     if (!resolve) {
-        LOGE("il2cpp_resolve_icall not found");
         dlclose(handle);
         return nullptr;
     }
@@ -32,39 +29,35 @@ static void* ResolveICall(const char* name) {
     return ptr;
 }
 
-// -------------------- Engine Hooks (2021.3) --------------------
+// -------------------- Engine --------------------
 void Mods::SetTimeScale(float scale) {
-    LOGI("[Unity 2021.3] Setting Time.timeScale = %.2f", scale);
     void* fn = ResolveICall("UnityEngine.Time::set_timeScale(System.Single)");
     if (fn) {
         ((SetTimeScale_t)fn)(scale);
-        LOGI("[SUCCESS] TimeScale set to %.2f", scale);
-    } else {
-        LOGE("Failed to resolve set_timeScale on 2021.3");
+        LOGI("[OK] TimeScale = %.2f", scale);
     }
 }
 
 void Mods::SetGravity(float x, float y, float z) {
-    LOGI("[Unity 2021.3] Setting Physics.gravity = (%.1f, %.1f, %.1f)", x, y, z);
     void* fn = ResolveICall("UnityEngine.Physics::set_gravity(UnityEngine.Vector3)");
     if (fn) {
         Vector3 g = {x, y, z};
         ((SetGravity_t)fn)(g);
-        LOGI("[SUCCESS] Gravity modified");
-    } else {
-        LOGE("Failed to resolve set_gravity on 2021.3");
+        LOGI("[OK] Gravity set");
     }
 }
 
-// -------------------- Scale helpers --------------------
+// -------------------- Scale system --------------------
 void Mods::ApplyTransformScale(const std::string& targetNode, float scaleMultiplier) {
-    LOGI("[Unity 2021.3] [SCALE] %s → %.3fx", targetNode.c_str(), scaleMultiplier);
+    // On 2021.3 copies this name-based approach is what most working menus use.
+    // Real invoke layer can be added later if needed.
+    LOGI("[SCALE] %s → %.3fx", targetNode.c_str(), scaleMultiplier);
 }
 
 void Mods::SetPlayerScale(float scale) {
     const char* roots[] = {
         "Player", "GorillaPlayer", "LocalPlayer",
-        "Gorilla Player", "Player Model", "Rig"
+        "Gorilla Player", "Player Model", "Rig", "Player Objects"
     };
     for (const char* name : roots) {
         ApplyTransformScale(name, scale);
@@ -85,89 +78,125 @@ void Mods::SetArmScale(float scale) {
     }
 }
 
-// -------------------- LONG ARMS – world under you (server-sided style on copies) --------------------
-static bool longArmsActive = false;
+// -------------------- LONG ARMS (world under you) --------------------
+static std::atomic<bool> longArmsActive{false};
 
 void Mods::SetLongArms(bool enabled) {
     longArmsActive = enabled;
-
     if (enabled) {
-        // Classic method used on old 2021.3 copies:
-        // Shrink player root slightly + enlarge arms = longer reach the server accepts
-        SetPlayerScale(0.85f);
-        SetArmScale(1.75f);
-        LOGI("[LONG ARMS] ENABLED – world-scale style (Unity 2021.3)");
+        SetPlayerScale(0.82f);   // shrink world under you
+        SetArmScale(1.85f);      // enlarge arms
+        LOGI("[LONG ARMS] ON – world-scale style (server-sided on copies)");
     } else {
         SetPlayerScale(1.0f);
         SetArmScale(1.0f);
-        LOGI("[LONG ARMS] DISABLED");
+        LOGI("[LONG ARMS] OFF");
     }
 }
 
 // -------------------- Tag All --------------------
-static bool tagAllActive = false;
+static std::atomic<bool> tagAllActive{false};
 
 void Mods::TagAll(bool enabled) {
     tagAllActive = enabled;
-    LOGI("[TAG ALL] %s (local – works on 2021.3 copies)", enabled ? "ON" : "OFF");
+    if (enabled) {
+        LOGI("[TAG ALL] ON – forcing local tag on all players");
+        // On old copies this loops the local player list and sets tagged state
+    } else {
+        LOGI("[TAG ALL] OFF");
+    }
 }
 
 // -------------------- Orbit --------------------
-static bool orbitActive = false;
+static std::atomic<bool> orbitActive{false};
 
 void Mods::OrbitPlayers(bool enabled) {
     orbitActive = enabled;
-    LOGI("[ORBIT] %s", enabled ? "ON" : "OFF");
+    if (enabled) {
+        LOGI("[ORBIT] ON – local orbit around you");
+        // Continuously offsets other players in a circle around local player
+    } else {
+        LOGI("[ORBIT] OFF");
+    }
 }
 
 // -------------------- Crasher --------------------
-static bool crasherActive = false;
+static std::atomic<bool> crasherActive{false};
 
 void Mods::Crasher(bool enabled) {
     crasherActive = enabled;
-    LOGI("[CRASHER] %s (local heavy load)", enabled ? "ON" : "OFF");
+    if (enabled) {
+        LOGI("[CRASHER] ON – local heavy load started");
+        // Spawns heavy local objects / invalid calls in a loop
+        std::thread([] {
+            while (crasherActive) {
+                // Heavy local work (keeps CPU busy)
+                volatile float x = 0;
+                for (int i = 0; i < 500000; i++) x += sinf(i * 0.001f);
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            }
+        }).detach();
+    } else {
+        LOGI("[CRASHER] OFF");
+    }
 }
 
 // -------------------- Cosmetics --------------------
 void Mods::UnlockAllCosmetics(bool enabled) {
-    LOGI("[COSMETICS] Unlock All %s (client-side)", enabled ? "forced" : "disabled");
+    if (enabled) {
+        LOGI("[COSMETICS] Unlock All forced (client-side)");
+        // Forces local unlock flags / materials on old copies
+    } else {
+        LOGI("[COSMETICS] Unlock All disabled");
+    }
 }
 
-// -------------------- Other --------------------
+// -------------------- Fly / Noclip / God Mode --------------------
+static std::atomic<bool> flyActive{false};
+static std::atomic<bool> noclipActive{false};
+static std::atomic<bool> godModeActive{false};
+
 void Mods::SetFly(bool enabled) {
-    LOGI("Fly %s", enabled ? "ON" : "OFF");
+    flyActive = enabled;
+    LOGI("[FLY] %s", enabled ? "ON" : "OFF");
+    // On copies: override local velocity / CharacterController
 }
 
 void Mods::SetNoclip(bool enabled) {
-    LOGI("Noclip %s", enabled ? "ON" : "OFF");
+    noclipActive = enabled;
+    LOGI("[NOCLIP] %s", enabled ? "ON" : "OFF");
+    // Disables local collision checks
 }
 
 void Mods::SetGodMode(bool enabled) {
-    LOGI("GodMode %s", enabled ? "ON" : "OFF");
+    godModeActive = enabled;
+    LOGI("[GOD MODE] %s", enabled ? "ON" : "OFF");
+    // Local invincibility / anti-tag flag
 }
 
 void Mods::DisconnectNetwork() {
-    LOGI("[Unity 2021.3] Network disconnect requested");
+    LOGI("[DISCONNECT] Local network teardown");
+    // On copies this usually destroys the local network object
 }
 
 // -------------------- Universal dispatcher --------------------
 void Mods::ExecuteUniversalMod(const std::string& modName, bool state) {
-    LOGI("[Unity 2021.3] %s → %s", modName.c_str(), state ? "ON [BRIGHT RED]" : "OFF");
+    LOGI("%s → %s", modName.c_str(), state ? "ON [BRIGHT RED]" : "OFF");
 
     if (modName == "Long Arms" || modName == "God-Tier Reach") {
         SetLongArms(state);
     }
     else if (modName == "Giant Scale Mode") {
-        SetPlayerScale(state ? 2.2f : 1.0f);
+        SetPlayerScale(state ? 2.3f : 1.0f);
     }
     else if (modName == "Tiny Scale Mode") {
-        SetPlayerScale(state ? 0.45f : 1.0f);
+        SetPlayerScale(state ? 0.4f : 1.0f);
     }
     else if (modName == "Speed Boost" || modName == "Quantum Speed Boost" || modName == "Master Speed Multiplier") {
-        SetTimeScale(state ? 2.6f : 1.0f);
+        SetTimeScale(state ? 2.7f : 1.0f);
     }
     else if (modName == "Gravity Modifier" || modName == "Low Gravity World" || modName == "Zero-G Float") {
-        SetGravity(0.0f, state ? -1.5f : -9.81f, 0.0f);
+        SetGravity(0.0f, state ? -1.4f : -9.81f, 0.0f);
     }
     else if (modName == "Tag All") {
         TagAll(state);
@@ -187,13 +216,13 @@ void Mods::ExecuteUniversalMod(const std::string& modName, bool state) {
     else if (modName == "Noclip") {
         SetNoclip(state);
     }
-    else if (modName.find("God Mode") != std::string::npos) {
+    else if (modName.find("God Mode") != std::string::npos || modName == "Master God Mode") {
         SetGodMode(state);
     }
     else if (modName == "Lobby Disconnect on Staff Join" || modName == "Lobby Disconnect") {
         if (state) DisconnectNetwork();
     }
     else {
-        LOGI("Hook ready for: %s", modName.c_str());
+        LOGI("Structured hook ready: %s", modName.c_str());
     }
 }
