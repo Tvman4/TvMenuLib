@@ -113,19 +113,16 @@ const std::vector<Category> TvMenuQuest::categories = {
 };
 
 void TvMenuQuest::InitMenu() {
-    LOGI("%s ready – Unity 2021.3", menuTitle.c_str());
-    LoadConfig();
-    ShowNotification("TvMenuQuest Loaded");
+    LOGI("%s ready – Unity 2021.3 (safe mode)", menuTitle.c_str());
+    ShowNotification("TvMenuQuest Loaded – Safe Mode");
 }
 
 void TvMenuQuest::ShowNotification(const std::string& message) {
-    if (notificationsEnabled) {
-        LOGI("[BRIGHT RED NOTIFICATION] %s", message.c_str());
-    }
+    if (!notificationsEnabled) return;
+    LOGI("[BRIGHT RED NOTIFICATION] %s", message.c_str());
 }
 
 void TvMenuQuest::UpdateInput() {
-    // Placeholder – replace with real controller reads later
     bool A = false, B = false, X = false, Y = false;
     bool Left = false, Right = false, Up = false, Down = false;
 
@@ -221,28 +218,7 @@ void TvMenuQuest::SaveConfig() {
 }
 
 void TvMenuQuest::LoadConfig() {
-    const char* paths[] = {
-        "/data/data/com.AnotherAxiom.GorillaTag/files/tvmenu_config.txt",
-        "/data/data/com.gorilla.tag/files/tvmenu_config.txt",
-        "/sdcard/TvMenuQuest_config.txt"
-    };
-
-    for (const char* path : paths) {
-        std::ifstream file(path);
-        if (file.is_open()) {
-            std::string line;
-            std::lock_guard<std::mutex> lock(stateMutex);
-            while (std::getline(file, line)) {
-                if (!line.empty()) {
-                    activeModStates[line] = true;
-                    Mods::ExecuteUniversalMod(line, true);
-                }
-            }
-            file.close();
-            ShowNotification("Config Loaded");
-            return;
-        }
-    }
+    // Disabled on startup to prevent crashes
 }
 
 void TvMenuQuest::DisconnectLobbyGlobal() {
