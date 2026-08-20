@@ -10,9 +10,12 @@ public:
     static void SetFly(bool enabled);
     static void SetNoclip(bool enabled);
     static void SetGravity(bool enabled);
+    static void SetSuperJump(bool enabled);
+    static void SetZeroGravity(bool enabled);
     static void TagAll(bool enabled);
     static void Orbit(bool enabled);
     static void Crasher(bool enabled);
     static void UnlockCosmetics(bool enabled);
     static void GodMode(bool enabled);
+    static void Fullbright(bool enabled);
 };
