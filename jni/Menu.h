@@ -1,7 +1,8 @@
 #pragma once
-#include <jni.h>
 #include <string>
 #include <vector>
+#include <map>
+#include <mutex>
 
 struct Category {
     std::string name;
@@ -21,7 +22,16 @@ public:
     static void RenderUI();
     static void ScrollLeft();
     static void ScrollRight();
+    static void ScrollUp();
+    static void ScrollDown();
     static void SelectCurrentMod();
-    static void ShowNotification(std::string message);
+    static void ShowNotification(const std::string& message);
     static void DisconnectLobbyGlobal();
+    static void SaveConfig();
+    static void LoadConfig();
+    static bool IsModActive(const std::string& modName);
+
+private:
+    static std::map<std::string, bool> activeModStates;
+    static std::mutex stateMutex;
 };
