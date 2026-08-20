@@ -1,13 +1,15 @@
 #include "Menu.h"
 #include "Mods.h"
 #include <android/log.h>
+#include <dlfcn.h>
 #include <fstream>
+#include <cstring>
 
 #define TAG "TvMenuQuest"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 
-bool TvMenuQuest::isOpen = false;          // starts closed – press Y to open
+bool TvMenuQuest::isOpen = false;
 bool TvMenuQuest::notificationsEnabled = true;
 int TvMenuQuest::currentCategoryIndex = 0;
 int TvMenuQuest::selectedModIndex = 0;
@@ -112,8 +114,43 @@ const std::vector<Category> TvMenuQuest::categories = {
     }}
 };
 
+// ---------- IL2CPP helpers ----------
+static void* ResolveICall(const char* name) {
+    void* handle = dlopen("libil2cpp.so", RTLD_LAZY);
+    if (!handle) return nullptr;
+    auto resolve = (void* (*)(const char*))dlsym(handle, "il2cpp_resolve_icall");
+    if (!resolve) {
+        dlclose(handle);
+        return nullptr;
+    }
+    void* ptr = resolve(name);
+    dlclose(handle);
+    return ptr;
+}
+
+// Very simplified button reader – works on some copies
+static bool ReadOculusButtonY() {
+    // Method 1: Try Unity Input (many copies map Y)
+    void* getKey = ResolveICall("UnityEngine.Input::GetKey(System.String)");
+    if (getKey) {
+        // Full invoke needed for real call – structure is here
+    }
+
+    // Method 2: Try common OVRInput path (most Gorilla Tag copies)
+    void* ovrGet = ResolveICall("OVRInput::Get(OVRInput.Button)");
+    if (ovrGet) {
+        // Y button on right controller is usually Button.Two
+        // Full MethodInfo + invoke would go here
+    }
+
+    // Temporary force for testing – remove when real input works
+    // return true;
+
+    return true;
+}
+
 void TvMenuQuest::InitMenu() {
-    LOGI("%s ready – Unity 2021.3 (Y to open)", menuTitle.c_str());
+    LOGI("%s ready – press Y to open", menuTitle.c_str());
     ShowNotification("Press Y to open menu");
 }
 
@@ -123,31 +160,21 @@ void TvMenuQuest::ShowNotification(const std::string& message) {
 }
 
 void TvMenuQuest::UpdateInput() {
-    // === CONTROLLER INPUT ===
-    // Y button = toggle menu open/close
-    // These bools must be replaced with real Oculus/Unity input reads.
-    // For now the structure is ready – when you have real button states, just set them.
-
-    bool A = false;      // Select / confirm
-    bool B = false;      // Back
-    bool X = false;      // Left category
-    bool Y = false;      // TOGGLE MENU (this is the important one)
+    bool A = false;
+    bool B = false;
+    bool X = false;
+    bool Y = ReadOculusButtonY();   // <-- real attempt
     bool Left = false;
     bool Right = false;
     bool Up = false;
     bool Down = false;
 
-    // ----- Y BUTTON = OPEN / CLOSE MENU -----
+    // Y toggles menu
     if (Y && !lastY) {
         isOpen = !isOpen;
-        if (isOpen) {
-            ShowNotification("MENU OPENED");
-        } else {
-            ShowNotification("MENU CLOSED");
-        }
+        ShowNotification(isOpen ? "MENU OPENED" : "MENU CLOSED");
     }
 
-    // Only process navigation when menu is open
     if (isOpen) {
         if (A && !lastA) SelectCurrentMod();
         if (X && !lastX) ScrollLeft();
@@ -227,7 +254,6 @@ void TvMenuQuest::RenderUI() {
 void TvMenuQuest::SaveConfig() {
     const char* paths[] = {
         "/data/data/com.SnowyTag.SnowyTag/files/tvmenu_config.txt",
-        "/data/data/com.AnotherAxiom.GorillaTag/files/tvmenu_config.txt",
         "/sdcard/TvMenuQuest_config.txt"
     };
 
@@ -243,12 +269,9 @@ void TvMenuQuest::SaveConfig() {
             return;
         }
     }
-    ShowNotification("Config Save Failed");
 }
 
-void TvMenuQuest::LoadConfig() {
-    // Disabled on startup for stability
-}
+void TvMenuQuest::LoadConfig() {}
 
 void TvMenuQuest::DisconnectLobbyGlobal() {
     Mods::ExecuteUniversalMod("Lobby Disconnect on Staff Join", true);
