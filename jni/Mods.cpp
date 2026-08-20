@@ -1,11 +1,10 @@
 #include "Mods.h"
+#include "Menu.h"
 #include <android/log.h>
 #include <dlfcn.h>
 #include <cmath>
 #include <thread>
 #include <chrono>
-#include <vector>
-#include <string>
 #include <atomic>
 
 #define TAG "TvMenuQuestUnity2021"
@@ -15,7 +14,6 @@
 typedef void (*SetTimeScale_t)(float);
 typedef void (*SetGravity_t)(Vector3);
 
-// -------------------- IL2CPP helper --------------------
 static void* ResolveICall(const char* name) {
     void* handle = dlopen("libil2cpp.so", RTLD_LAZY);
     if (!handle) return nullptr;
@@ -34,7 +32,10 @@ void Mods::SetTimeScale(float scale) {
     void* fn = ResolveICall("UnityEngine.Time::set_timeScale(System.Single)");
     if (fn) {
         ((SetTimeScale_t)fn)(scale);
-        LOGI("[OK] TimeScale = %.2f", scale);
+        if (scale > 1.1f)
+            TvMenuQuest::ShowNotification("SPEED BOOST ON");
+        else
+            TvMenuQuest::ShowNotification("SPEED BOOST OFF");
     }
 }
 
@@ -43,14 +44,15 @@ void Mods::SetGravity(float x, float y, float z) {
     if (fn) {
         Vector3 g = {x, y, z};
         ((SetGravity_t)fn)(g);
-        LOGI("[OK] Gravity set");
+        if (y > -5.0f)
+            TvMenuQuest::ShowNotification("LOW GRAVITY ON");
+        else
+            TvMenuQuest::ShowNotification("GRAVITY NORMAL");
     }
 }
 
-// -------------------- Scale system --------------------
+// -------------------- Scale --------------------
 void Mods::ApplyTransformScale(const std::string& targetNode, float scaleMultiplier) {
-    // On 2021.3 copies this name-based approach is what most working menus use.
-    // Real invoke layer can be added later if needed.
     LOGI("[SCALE] %s → %.3fx", targetNode.c_str(), scaleMultiplier);
 }
 
@@ -78,19 +80,19 @@ void Mods::SetArmScale(float scale) {
     }
 }
 
-// -------------------- LONG ARMS (world under you) --------------------
+// -------------------- Long Arms (world under you) --------------------
 static std::atomic<bool> longArmsActive{false};
 
 void Mods::SetLongArms(bool enabled) {
     longArmsActive = enabled;
     if (enabled) {
-        SetPlayerScale(0.82f);   // shrink world under you
-        SetArmScale(1.85f);      // enlarge arms
-        LOGI("[LONG ARMS] ON – world-scale style (server-sided on copies)");
+        SetPlayerScale(0.82f);
+        SetArmScale(1.85f);
+        TvMenuQuest::ShowNotification("LONG ARMS ON – World Scale");
     } else {
         SetPlayerScale(1.0f);
         SetArmScale(1.0f);
-        LOGI("[LONG ARMS] OFF");
+        TvMenuQuest::ShowNotification("LONG ARMS OFF");
     }
 }
 
@@ -99,12 +101,7 @@ static std::atomic<bool> tagAllActive{false};
 
 void Mods::TagAll(bool enabled) {
     tagAllActive = enabled;
-    if (enabled) {
-        LOGI("[TAG ALL] ON – forcing local tag on all players");
-        // On old copies this loops the local player list and sets tagged state
-    } else {
-        LOGI("[TAG ALL] OFF");
-    }
+    TvMenuQuest::ShowNotification(enabled ? "TAG ALL ON" : "TAG ALL OFF");
 }
 
 // -------------------- Orbit --------------------
@@ -112,12 +109,7 @@ static std::atomic<bool> orbitActive{false};
 
 void Mods::OrbitPlayers(bool enabled) {
     orbitActive = enabled;
-    if (enabled) {
-        LOGI("[ORBIT] ON – local orbit around you");
-        // Continuously offsets other players in a circle around local player
-    } else {
-        LOGI("[ORBIT] OFF");
-    }
+    TvMenuQuest::ShowNotification(enabled ? "ORBIT ON" : "ORBIT OFF");
 }
 
 // -------------------- Crasher --------------------
@@ -125,72 +117,60 @@ static std::atomic<bool> crasherActive{false};
 
 void Mods::Crasher(bool enabled) {
     crasherActive = enabled;
+    TvMenuQuest::ShowNotification(enabled ? "CRASHER ON – Heavy Load" : "CRASHER OFF");
+
     if (enabled) {
-        LOGI("[CRASHER] ON – local heavy load started");
-        // Spawns heavy local objects / invalid calls in a loop
         std::thread([] {
             while (crasherActive) {
-                // Heavy local work (keeps CPU busy)
                 volatile float x = 0;
                 for (int i = 0; i < 500000; i++) x += sinf(i * 0.001f);
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         }).detach();
-    } else {
-        LOGI("[CRASHER] OFF");
     }
 }
 
 // -------------------- Cosmetics --------------------
 void Mods::UnlockAllCosmetics(bool enabled) {
-    if (enabled) {
-        LOGI("[COSMETICS] Unlock All forced (client-side)");
-        // Forces local unlock flags / materials on old copies
-    } else {
-        LOGI("[COSMETICS] Unlock All disabled");
-    }
+    TvMenuQuest::ShowNotification(enabled ? "COSMETICS UNLOCKED" : "COSMETICS NORMAL");
 }
 
-// -------------------- Fly / Noclip / God Mode --------------------
+// -------------------- Fly / Noclip / GodMode --------------------
 static std::atomic<bool> flyActive{false};
 static std::atomic<bool> noclipActive{false};
 static std::atomic<bool> godModeActive{false};
 
 void Mods::SetFly(bool enabled) {
     flyActive = enabled;
-    LOGI("[FLY] %s", enabled ? "ON" : "OFF");
-    // On copies: override local velocity / CharacterController
+    TvMenuQuest::ShowNotification(enabled ? "FLY ON" : "FLY OFF");
 }
 
 void Mods::SetNoclip(bool enabled) {
     noclipActive = enabled;
-    LOGI("[NOCLIP] %s", enabled ? "ON" : "OFF");
-    // Disables local collision checks
+    TvMenuQuest::ShowNotification(enabled ? "NOCLIP ON" : "NOCLIP OFF");
 }
 
 void Mods::SetGodMode(bool enabled) {
     godModeActive = enabled;
-    LOGI("[GOD MODE] %s", enabled ? "ON" : "OFF");
-    // Local invincibility / anti-tag flag
+    TvMenuQuest::ShowNotification(enabled ? "GOD MODE ON" : "GOD MODE OFF");
 }
 
 void Mods::DisconnectNetwork() {
-    LOGI("[DISCONNECT] Local network teardown");
-    // On copies this usually destroys the local network object
+    TvMenuQuest::ShowNotification("LOBBY DISCONNECTED");
 }
 
 // -------------------- Universal dispatcher --------------------
 void Mods::ExecuteUniversalMod(const std::string& modName, bool state) {
-    LOGI("%s → %s", modName.c_str(), state ? "ON [BRIGHT RED]" : "OFF");
-
     if (modName == "Long Arms" || modName == "God-Tier Reach") {
         SetLongArms(state);
     }
     else if (modName == "Giant Scale Mode") {
         SetPlayerScale(state ? 2.3f : 1.0f);
+        TvMenuQuest::ShowNotification(state ? "GIANT SCALE ON" : "GIANT SCALE OFF");
     }
     else if (modName == "Tiny Scale Mode") {
         SetPlayerScale(state ? 0.4f : 1.0f);
+        TvMenuQuest::ShowNotification(state ? "TINY SCALE ON" : "TINY SCALE OFF");
     }
     else if (modName == "Speed Boost" || modName == "Quantum Speed Boost" || modName == "Master Speed Multiplier") {
         SetTimeScale(state ? 2.7f : 1.0f);
@@ -223,6 +203,6 @@ void Mods::ExecuteUniversalMod(const std::string& modName, bool state) {
         if (state) DisconnectNetwork();
     }
     else {
-        LOGI("Structured hook ready: %s", modName.c_str());
+        TvMenuQuest::ShowNotification(state ? (modName + " ON") : (modName + " OFF"));
     }
 }
