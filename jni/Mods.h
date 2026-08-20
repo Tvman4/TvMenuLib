@@ -13,7 +13,7 @@ public:
     static void SetGravity(float x, float y, float z);
 
     static void ApplyTransformScale(const std::string& targetNode, float scaleMultiplier);
-    static void SetLongArms(bool enabled);          // world-under-you style
+    static void SetLongArms(bool enabled);
     static void SetPlayerScale(float scale);
     static void SetArmScale(float scale);
 
