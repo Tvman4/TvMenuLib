@@ -27,7 +27,6 @@ static void* ResolveICall(const char* name) {
     return ptr;
 }
 
-// -------------------- Engine --------------------
 void Mods::SetTimeScale(float scale) {
     void* fn = ResolveICall("UnityEngine.Time::set_timeScale(System.Single)");
     if (fn) {
@@ -51,7 +50,6 @@ void Mods::SetGravity(float x, float y, float z) {
     }
 }
 
-// -------------------- Scale --------------------
 void Mods::ApplyTransformScale(const std::string& targetNode, float scaleMultiplier) {
     LOGI("[SCALE] %s → %.3fx", targetNode.c_str(), scaleMultiplier);
 }
@@ -80,7 +78,6 @@ void Mods::SetArmScale(float scale) {
     }
 }
 
-// -------------------- Long Arms (world under you) --------------------
 static std::atomic<bool> longArmsActive{false};
 
 void Mods::SetLongArms(bool enabled) {
@@ -96,7 +93,6 @@ void Mods::SetLongArms(bool enabled) {
     }
 }
 
-// -------------------- Tag All --------------------
 static std::atomic<bool> tagAllActive{false};
 
 void Mods::TagAll(bool enabled) {
@@ -104,7 +100,6 @@ void Mods::TagAll(bool enabled) {
     TvMenuQuest::ShowNotification(enabled ? "TAG ALL ON" : "TAG ALL OFF");
 }
 
-// -------------------- Orbit --------------------
 static std::atomic<bool> orbitActive{false};
 
 void Mods::OrbitPlayers(bool enabled) {
@@ -112,30 +107,18 @@ void Mods::OrbitPlayers(bool enabled) {
     TvMenuQuest::ShowNotification(enabled ? "ORBIT ON" : "ORBIT OFF");
 }
 
-// -------------------- Crasher --------------------
 static std::atomic<bool> crasherActive{false};
 
 void Mods::Crasher(bool enabled) {
     crasherActive = enabled;
-    TvMenuQuest::ShowNotification(enabled ? "CRASHER ON – Heavy Load" : "CRASHER OFF");
-
-    if (enabled) {
-        std::thread([] {
-            while (crasherActive) {
-                volatile float x = 0;
-                for (int i = 0; i < 500000; i++) x += sinf(i * 0.001f);
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
-            }
-        }).detach();
-    }
+    TvMenuQuest::ShowNotification(enabled ? "CRASHER ON" : "CRASHER OFF");
+    // Heavy thread disabled to prevent crashes
 }
 
-// -------------------- Cosmetics --------------------
 void Mods::UnlockAllCosmetics(bool enabled) {
     TvMenuQuest::ShowNotification(enabled ? "COSMETICS UNLOCKED" : "COSMETICS NORMAL");
 }
 
-// -------------------- Fly / Noclip / GodMode --------------------
 static std::atomic<bool> flyActive{false};
 static std::atomic<bool> noclipActive{false};
 static std::atomic<bool> godModeActive{false};
@@ -159,7 +142,6 @@ void Mods::DisconnectNetwork() {
     TvMenuQuest::ShowNotification("LOBBY DISCONNECTED");
 }
 
-// -------------------- Universal dispatcher --------------------
 void Mods::ExecuteUniversalMod(const std::string& modName, bool state) {
     if (modName == "Long Arms" || modName == "God-Tier Reach") {
         SetLongArms(state);
