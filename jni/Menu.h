@@ -21,7 +21,7 @@ public:
 
     static void InitMenu();
     static void RenderUI();
-    static void UpdateInput();          // Controller input
+    static void UpdateInput();
     static void ScrollLeft();
     static void ScrollRight();
     static void ScrollUp();
@@ -37,7 +37,6 @@ private:
     static std::map<std::string, bool> activeModStates;
     static std::mutex stateMutex;
 
-    // Simple input debounce
     static bool lastA, lastB, lastX, lastY;
     static bool lastLeft, lastRight, lastUp, lastDown;
 };
