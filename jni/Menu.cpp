@@ -2,7 +2,6 @@
 #include "Mods.h"
 #include <android/log.h>
 #include <fstream>
-#include <unistd.h>
 
 #define TAG "TvMenuQuest"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
@@ -28,8 +27,6 @@ bool TvMenuQuest::lastDown = false;
 const std::string TvMenuQuest::menuTitle = "=== TvMenuQuest [Blood Red #8B0000] ===";
 
 const std::vector<Category> TvMenuQuest::categories = {
-    // ... keep the exact same big category list you already had ...
-    // (I kept it identical so you don't lose any names)
     {"🏃 Movement Mods", {
         "Speed Boost", "Long Arms", "Fly", "Noclip", "Platform Gun",
         "Air Control", "Gravity Modifier", "Spider-Man (Wall Climb Boost)",
@@ -39,43 +36,101 @@ const std::vector<Category> TvMenuQuest::categories = {
         "Upward Booster", "Auto-Catch Ledges", "Ice Physics (Zero Friction)",
         "Bounce Pad Spawner", "Hookshot", "Phase Dash", "PC Monke"
     }},
-    // ... (all other categories remain exactly the same as before)
+    {"👁️ Visual & Render", {
+        "Fullbright", "ESP (Player Chams)", "Tracers", "Bone ESP", "NameTags",
+        "FOV Changer", "Third-Person Camera", "Custom Skybox", "X-Ray",
+        "FPS Counter", "Wireframe Mode", "Rainbow World", "Vertex Distortion",
+        "Hitbox Visualizer", "Player Direction Arrows", "Freecam", "Scope Overlay",
+        "Custom Crosshair", "Weather Overlay (Rain/Snow)", "Brightness Slider",
+        "Shadow Disabler", "Particle Effect Spawner", "Custom Fog Density",
+        "Headlamp / Flashlight", "Distance Culling Toggle"
+    }},
+    {"🛡️ Safety & Protection", {
+        "Anti-Ban", "Anti-Report", "Report Block", "Name Spoofer", "ID Spoofer",
+        "RPC Spoofing", "Lobby Disconnect on Staff Join", "Stealth Hooks",
+        "Anti-Crash", "Anti-Freeze", "Anti-Audio Spam", "Anti-Teleport Grab",
+        "Auto-Reconnect", "Ghost Mode (Invisible to Staff)", "IP Masker",
+        "Ping Fixer / Latency Smoother", "Packet Loss Shield",
+        "Bad Word Filter Bypass / Protection", "Secure Handshake", "Log Cleaner",
+        "Anti-Kick", "Session Guard"
+    }},
+    {"🌐 Multiplayer & Trolling", {
+        "Tag Gun", "Tag All", "Invis-All", "Sound Spam", "Rope Spaz / Fling",
+        "Move All Ropes", "Aura Tag", "Ghost Monkey", "Crasher (Lobby Lag)",
+        "Fake Tag", "Mute All", "Kick Gun", "Freeze Player", "Orbit Player",
+        "Copy Cat (Mirror Movement)", "Hand Lock", "Audio Pitch Shift",
+        "Voice Changer Filter", "Spam Chat / Notifications", "Randomize Player Colors",
+        "Teleport All to Me", "Swap Positions", "Invert Controls (Target)",
+        "Slow Motion (Target)", "Balloon Attach", "Fake Join/Leave Messages",
+        "Spectate Player First-Person", "Auto-Tag Nearest", "Orbiting Proximity Alarm",
+        "Decoy Clone Spawner"
+    }},
+    {"🎨 Cosmetic & Customization", {
+        "Unlock All Cosmetics", "Custom Color Changer (RGB Cycle)", "Material Changer",
+        "Custom Holdables", "Badge Unlocker", "FakeFingerPainter", "Custom Hat Spawner",
+        "Custom Badge Creator", "Glow Skin Texture", "Particle Trail Hand FX",
+        "Rainbow Hands", "Ghostly Transparency Effect", "Custom Name Tag Color",
+        "Holdable Scale Changer", "Dynamic Aura Effect", "Custom Finger Gestures",
+        "Golden Skin Plating", "Matrix Code Texture", "Chrome Reflection Skin",
+        "Animated Texture Cycling"
+    }},
+    {"🌍 World & Fun", {
+        "Teleport to Players", "Teleport to Map Locations", "Time of Day Changer",
+        "Water Walk", "No-Clip Trees", "Soundboard", "Path Recorder",
+        "Custom Object Spawner", "Low Gravity World", "Map Exploder",
+        "Infinite Sound Echo", "Weather Controller (Storm/Fog)", "Mirror Everywhere",
+        "Custom Gravity Zones", "Portal Gun", "Target Practice Target Spawner",
+        "Breakable Prop Spawner", "Laser Beam Tool", "Giant Scale Mode",
+        "Tiny Scale Mode", "World Texture Swap", "Day/Night Fast Cycle"
+    }},
+    {"⚙️ Settings & Menu Controls", {
+        "Menu Customizer (Bright Red Highlight)", "Keybind Editor", "Toggle Notifications",
+        "Save Config", "Disable Menu Sounds", "FPS Limiter", "Menu Sound Effects Volume",
+        "Auto-Load Config on Startup", "Menu Transparency / Opacity",
+        "Controller Vibration Toggle", "Menu Layout Position Switcher",
+        "Panic Key (Instant Close All)", "Export/Import Config Profile",
+        "Diagnostic Overlay (CPU/GPU Usage)"
+    }},
     {"⚡ OP Mods", {
         "Master God Mode", "Ultimate Admin God-Mode", "Infinite Health / Anti-Tag Out",
-        // ... rest of your OP list
+        "Infinite Shield Projector", "Supreme Connection Shield", "Anti-Unban Bypass",
+        "Quantum Speed Boost", "Master Speed Multiplier", "God-Tier Reach",
+        "Master Hitbox Extender", "Infinite Master Teleport", "Infinite Teleport Trail",
+        "Master Phase Breaker", "Ultimate Boundary Eraser", "Infinite Object Grab",
+        "Supreme Invisible God", "Ultimate Aura", "Instant Server Crash Gun",
+        "Supreme Server Nuke", "Lobby Wipeout Tool", "Ultimate Room Hijacker",
+        "Supreme Room Lock", "Host Override", "Admin Powers Bypass", "Master Controller",
+        "Master Clone Hacker", "Universal Clone Army", "Supreme Ghost Army",
+        "Total Server Freeze", "Infinite Stun Gun", "Ultimate Hand Flinger",
+        "Global Mute Overpower", "Master Sound Exploder", "Infinite Audio Injection",
+        "Ultimate Server Echo", "Infinite Material Spawner", "Master Gravity Overload",
+        "Absolute Horizon Shift", "Reality Rewrite", "Supreme Reality Shatter",
+        "Master Visual Warp", "Ultimate Color Apocalypse", "Supreme Time Warp",
+        "Master Skin Injector", "Master Animation Overwriter", "Infinite Score Modifier",
+        "Master Tracker", "Ultimate Mirror Matrix", "Supreme Packet Flooder",
         "Zero Latency Execution"
     }}
 };
 
 void TvMenuQuest::InitMenu() {
-    LOGI("%s ready – Unity 2022.3 LTS multi-copy support", menuTitle.c_str());
+    LOGI("%s ready – Unity 2021.3", menuTitle.c_str());
     LoadConfig();
+    ShowNotification("TvMenuQuest Loaded");
 }
 
 void TvMenuQuest::ShowNotification(const std::string& message) {
     if (notificationsEnabled) {
-        LOGI("[BRIGHT RED] %s", message.c_str());
+        LOGI("[BRIGHT RED NOTIFICATION] %s", message.c_str());
     }
 }
 
 void TvMenuQuest::UpdateInput() {
-    // This is a simplified polling layer.
-    // On real Quest you would resolve Oculus Input or Unity Input axes via il2cpp.
-    // For now it is structured so you can easily replace the bools with real button states.
+    // Placeholder – replace with real controller reads later
+    bool A = false, B = false, X = false, Y = false;
+    bool Left = false, Right = false, Up = false, Down = false;
 
-    // Example mapping (you will replace these with real controller reads):
-    bool A = false;      // Primary index trigger or A button
-    bool B = false;      // B button
-    bool X = false;
-    bool Y = false;
-    bool Left = false;   // Left stick left / D-pad
-    bool Right = false;
-    bool Up = false;
-    bool Down = false;
-
-    // Debounced actions
     if (A && !lastA) SelectCurrentMod();
-    if (B && !lastB) isOpen = !isOpen;               // Toggle menu
+    if (B && !lastB) isOpen = !isOpen;
     if (X && !lastX) ScrollLeft();
     if (Y && !lastY) ScrollRight();
     if (Left && !lastLeft) ScrollLeft();
@@ -121,8 +176,6 @@ void TvMenuQuest::SelectCurrentMod() {
     activeModStates[modName] = newState;
 
     Mods::ExecuteUniversalMod(modName, newState);
-
-    ShowNotification((newState ? "ON → " : "OFF → ") + modName);
 }
 
 bool TvMenuQuest::IsModActive(const std::string& modName) {
@@ -146,7 +199,6 @@ void TvMenuQuest::RenderUI() {
 }
 
 void TvMenuQuest::SaveConfig() {
-    // Tries common Gorilla Tag package paths
     const char* paths[] = {
         "/data/data/com.AnotherAxiom.GorillaTag/files/tvmenu_config.txt",
         "/data/data/com.gorilla.tag/files/tvmenu_config.txt",
@@ -165,7 +217,7 @@ void TvMenuQuest::SaveConfig() {
             return;
         }
     }
-    LOGE("Could not save config");
+    ShowNotification("Config Save Failed");
 }
 
 void TvMenuQuest::LoadConfig() {
@@ -187,7 +239,7 @@ void TvMenuQuest::LoadConfig() {
                 }
             }
             file.close();
-            LOGI("Config loaded from %s", path);
+            ShowNotification("Config Loaded");
             return;
         }
     }
