@@ -9,17 +9,14 @@ class Mods {
 public:
     static void ExecuteUniversalMod(const std::string& modName, bool state);
 
-    // Core
     static void SetTimeScale(float scale);
     static void SetGravity(float x, float y, float z);
 
-    // Scale systems
     static void ApplyTransformScale(const std::string& targetNode, float scaleMultiplier);
     static void SetLongArms(bool enabled);          // world-under-you style
     static void SetPlayerScale(float scale);
     static void SetArmScale(float scale);
 
-    // Requested features
     static void TagAll(bool enabled);
     static void OrbitPlayers(bool enabled);
     static void Crasher(bool enabled);
