@@ -7,7 +7,7 @@
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 
-bool TvMenuQuest::isOpen = true;
+bool TvMenuQuest::isOpen = false;          // starts closed – press Y to open
 bool TvMenuQuest::notificationsEnabled = true;
 int TvMenuQuest::currentCategoryIndex = 0;
 int TvMenuQuest::selectedModIndex = 0;
@@ -113,8 +113,8 @@ const std::vector<Category> TvMenuQuest::categories = {
 };
 
 void TvMenuQuest::InitMenu() {
-    LOGI("%s ready – Unity 2021.3 (safe mode)", menuTitle.c_str());
-    ShowNotification("TvMenuQuest Loaded – Safe Mode");
+    LOGI("%s ready – Unity 2021.3 (Y to open)", menuTitle.c_str());
+    ShowNotification("Press Y to open menu");
 }
 
 void TvMenuQuest::ShowNotification(const std::string& message) {
@@ -123,20 +123,49 @@ void TvMenuQuest::ShowNotification(const std::string& message) {
 }
 
 void TvMenuQuest::UpdateInput() {
-    bool A = false, B = false, X = false, Y = false;
-    bool Left = false, Right = false, Up = false, Down = false;
+    // === CONTROLLER INPUT ===
+    // Y button = toggle menu open/close
+    // These bools must be replaced with real Oculus/Unity input reads.
+    // For now the structure is ready – when you have real button states, just set them.
 
-    if (A && !lastA) SelectCurrentMod();
-    if (B && !lastB) isOpen = !isOpen;
-    if (X && !lastX) ScrollLeft();
-    if (Y && !lastY) ScrollRight();
-    if (Left && !lastLeft) ScrollLeft();
-    if (Right && !lastRight) ScrollRight();
-    if (Up && !lastUp) ScrollUp();
-    if (Down && !lastDown) ScrollDown();
+    bool A = false;      // Select / confirm
+    bool B = false;      // Back
+    bool X = false;      // Left category
+    bool Y = false;      // TOGGLE MENU (this is the important one)
+    bool Left = false;
+    bool Right = false;
+    bool Up = false;
+    bool Down = false;
 
-    lastA = A; lastB = B; lastX = X; lastY = Y;
-    lastLeft = Left; lastRight = Right; lastUp = Up; lastDown = Down;
+    // ----- Y BUTTON = OPEN / CLOSE MENU -----
+    if (Y && !lastY) {
+        isOpen = !isOpen;
+        if (isOpen) {
+            ShowNotification("MENU OPENED");
+        } else {
+            ShowNotification("MENU CLOSED");
+        }
+    }
+
+    // Only process navigation when menu is open
+    if (isOpen) {
+        if (A && !lastA) SelectCurrentMod();
+        if (X && !lastX) ScrollLeft();
+        if (B && !lastB) ScrollRight();
+        if (Left && !lastLeft) ScrollLeft();
+        if (Right && !lastRight) ScrollRight();
+        if (Up && !lastUp) ScrollUp();
+        if (Down && !lastDown) ScrollDown();
+    }
+
+    lastA = A;
+    lastB = B;
+    lastX = X;
+    lastY = Y;
+    lastLeft = Left;
+    lastRight = Right;
+    lastUp = Up;
+    lastDown = Down;
 }
 
 void TvMenuQuest::ScrollLeft() {
@@ -197,8 +226,8 @@ void TvMenuQuest::RenderUI() {
 
 void TvMenuQuest::SaveConfig() {
     const char* paths[] = {
+        "/data/data/com.SnowyTag.SnowyTag/files/tvmenu_config.txt",
         "/data/data/com.AnotherAxiom.GorillaTag/files/tvmenu_config.txt",
-        "/data/data/com.gorilla.tag/files/tvmenu_config.txt",
         "/sdcard/TvMenuQuest_config.txt"
     };
 
@@ -218,7 +247,7 @@ void TvMenuQuest::SaveConfig() {
 }
 
 void TvMenuQuest::LoadConfig() {
-    // Disabled on startup to prevent crashes
+    // Disabled on startup for stability
 }
 
 void TvMenuQuest::DisconnectLobbyGlobal() {
