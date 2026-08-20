@@ -15,11 +15,13 @@ public:
     static bool notificationsEnabled;
     static int currentCategoryIndex;
     static int selectedModIndex;
+
     static const std::string menuTitle;
     static const std::vector<Category> categories;
 
     static void InitMenu();
     static void RenderUI();
+    static void UpdateInput();          // Controller input
     static void ScrollLeft();
     static void ScrollRight();
     static void ScrollUp();
@@ -34,4 +36,8 @@ public:
 private:
     static std::map<std::string, bool> activeModStates;
     static std::mutex stateMutex;
+
+    // Simple input debounce
+    static bool lastA, lastB, lastX, lastY;
+    static bool lastLeft, lastRight, lastUp, lastDown;
 };
