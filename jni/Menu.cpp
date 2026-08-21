@@ -64,13 +64,13 @@ void TvMenuQuest::Draw() {
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.85f, 0.1f, 0.1f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 
-    ImGui::SetNextWindowSize(ImVec2(500, 520), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(500, 560), ImGuiCond_FirstUseEver);
     ImGui::Begin("TvMenuQuest", &isOpen, ImGuiWindowFlags_NoCollapse);
 
     ImGui::Text("TvMenuQuest");
     ImGui::Separator();
 
-    // ===== LEFT / RIGHT ARROWS + CATEGORY =====
+    // Left / Right arrows
     if (ImGui::Button("<")) {
         currentCategory--;
         if (currentCategory < 0) currentCategory = (int)categories.size() - 1;
@@ -99,11 +99,16 @@ void TvMenuQuest::Draw() {
             bool enabled = modStates[mods[i]];
             std::string label = mods[i] + (enabled ? "  [ON]" : "  [OFF]");
 
-            if (ImGui::Button(label.c_str(), ImVec2(300, 34))) {
+            if (ImGui::Button(label.c_str(), ImVec2(320, 34))) {
                 modStates[mods[i]] = !enabled;
                 Mods::ExecuteUniversalMod(mods[i], modStates[mods[i]]);
             }
         }
+    }
+
+    ImGui::Separator();
+    if (ImGui::Button("Disconnect from Lobby", ImVec2(320, 42))) {
+        Mods::ExecuteUniversalMod("Disconnect", true);
     }
 
     ImGui::End();
