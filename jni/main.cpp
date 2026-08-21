@@ -14,32 +14,33 @@
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "TvMenuMain", __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "TvMenuMain", __VA_ARGS__)
 
-typedef EGLBoolean (*eglSwapBuffers_t)(EGLDisplay dpy, EGLSurface surface);
+typedef EGLBoolean (*eglSwapBuffers_t)(EGLDisplay, EGLSurface);
 static eglSwapBuffers_t original_eglSwapBuffers = nullptr;
-static bool imgui_initialized = false;
+static bool imgui_ready = false;
 
 void InitImGui() {
-    if (imgui_initialized) return;
+    if (imgui_ready) return;
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+
     ImGuiIO& io = ImGui::GetIO();
-    io.DisplaySize = ImVec2(1920, 1080);
-    io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+    io.DisplaySize = ImVec2(1920.0f, 1080.0f);
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
     ImGui::StyleColorsDark();
     ImGui_ImplOpenGL3_Init("#version 300 es");
 
-    imgui_initialized = true;
-    LOGI("ImGui initialized successfully");
+    imgui_ready = true;
+    LOGI("ImGui ready");
 }
 
 EGLBoolean hooked_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
-    if (!imgui_initialized) {
+    if (!imgui_ready) {
         InitImGui();
     }
 
-    // Force menu open for testing
+    // Always force open
     TvMenuQuest::isOpen = true;
 
     ImGui_ImplOpenGL3_NewFrame();
@@ -56,45 +57,33 @@ EGLBoolean hooked_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
 bool InstallHook() {
     void* handle = dlopen("libEGL.so", RTLD_NOW);
     if (!handle) {
-        LOGE("Failed to open libEGL.so");
+        LOGE("libEGL.so failed");
         return false;
     }
 
     void* addr = dlsym(handle, "eglSwapBuffers");
     if (!addr) {
-        LOGE("eglSwapBuffers symbol not found");
+        LOGE("eglSwapBuffers not found");
         return false;
     }
 
-    LOGI("eglSwapBuffers found at %p", addr);
-
-    int result = DobbyHook(addr, (void*)hooked_eglSwapBuffers, (void**)&original_eglSwapBuffers);
-    if (result == 0) {
-        LOGI("DobbyHook SUCCESS");
+    if (DobbyHook(addr, (void*)hooked_eglSwapBuffers, (void**)&original_eglSwapBuffers) == 0) {
+        LOGI("Hook success");
         return true;
     }
 
-    LOGE("DobbyHook FAILED with code %d", result);
+    LOGE("Hook failed");
     return false;
 }
 
 void* MainThread(void*) {
-    sleep(8);
-
-    LOGI("MainThread started");
+    sleep(6);
     TvMenuQuest::Init();
-
-    if (InstallHook()) {
-        LOGI("Hook installed - menu should now appear");
-    } else {
-        LOGE("Hook failed - menu will not appear");
-    }
-
+    InstallHook();
     return nullptr;
 }
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
-    LOGI("JNI_OnLoad called");
     pthread_t t;
     pthread_create(&t, nullptr, MainThread, nullptr);
     pthread_detach(t);
