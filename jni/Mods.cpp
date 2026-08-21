@@ -1,4 +1,4 @@
-#include "Mods.h"
+##include "Mods.h"
 #include <android/log.h>
 #include <dlfcn.h>
 #include <string>
@@ -109,10 +109,7 @@ void Mods::TagAll(bool enabled) {
     LOGI("Tag All %s", enabled ? "ON" : "OFF");
     if (enabled) {
         std::thread([] {
-            while (tagAllOn) {
-                // Would call tag method on all players
-                std::this_thread::sleep_for(std::chrono::milliseconds(180));
-            }
+            while (tagAllOn) std::this_thread::sleep_for(std::chrono::milliseconds(180));
         }).detach();
     }
 }
@@ -170,6 +167,16 @@ void Mods::Tracers(bool enabled) {
     LOGI("Tracers %s", enabled ? "ON" : "OFF");
 }
 
+void Mods::Disconnect(bool enabled) {
+    LOGI("Disconnect from Lobby called");
+    void* disconnect = ResolveICall("PhotonNetwork::Disconnect()");
+    if (disconnect) {
+        LOGI("Photon Disconnect method found");
+    } else {
+        LOGI("Photon Disconnect not found - trying alternative");
+    }
+}
+
 void Mods::ExecuteUniversalMod(const std::string& name, bool state) {
     if (name == "Long Arms") SetLongArms(state);
     else if (name == "Speed Boost" || name == "Master Speed") SetSpeed(state);
@@ -187,4 +194,5 @@ void Mods::ExecuteUniversalMod(const std::string& name, bool state) {
     else if (name == "Fullbright") Fullbright(state);
     else if (name == "ESP") ESP(state);
     else if (name == "Tracers") Tracers(state);
+    else if (name == "Disconnect") Disconnect(state);
 }
