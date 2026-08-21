@@ -25,16 +25,13 @@ jobs:
       run: |
         ndk-build -C jni
 
-    - name: Rename Binaries by Architecture
+    - name: Prepare Output
       run: |
-        mkdir -p renamed_libs
-        cp libs/armeabi-v7a/libTvMenu.so renamed_libs/TvMenu-armeabi-v7a.so
-        cp libs/arm64-v8a/libTvMenu.so renamed_libs/TvMenu-arm64-v8a.so
+        mkdir -p output
+        cp libs/arm64-v8a/libTvMenu.so output/libTvMenu.so
 
-    - name: Upload Compiled .so Artifact
+    - name: Upload Compiled .so
       uses: actions/upload-artifact@v4
       with:
-        name: TvMenu-Architecture-Binaries
-        path: |
-          renamed_libs/TvMenu-armeabi-v7a.so
-          renamed_libs/TvMenu-arm64-v8a.so
+        name: TvMenu-arm64
+        path: output/libTvMenu.so
