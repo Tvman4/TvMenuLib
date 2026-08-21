@@ -1,4 +1,4 @@
-##include "Mods.h"
+#include "Mods.h"
 #include <android/log.h>
 #include <dlfcn.h>
 #include <string>
