@@ -22,4 +22,5 @@ public:
     static void Fullbright(bool enabled);
     static void ESP(bool enabled);
     static void Tracers(bool enabled);
+    static void Disconnect(bool enabled);
 };
