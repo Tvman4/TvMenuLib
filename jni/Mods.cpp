@@ -15,14 +15,19 @@ static void* ResolveICall(const char* name) {
 
 void Mods::SetLongArms(bool enabled) {
     LOGI("Long Arms %s", enabled ? "ON" : "OFF");
+    // World-scale style for old copies
     void* setScale = ResolveICall("UnityEngine.Transform::set_localScale(UnityEngine.Vector3)");
-    if (setScale) LOGI("Long Arms scale icall ready");
+    if (setScale) {
+        LOGI("Long Arms: Transform scale ready");
+    }
 }
 
 void Mods::SetSpeed(bool enabled) {
     LOGI("Speed Boost %s", enabled ? "ON" : "OFF");
     void* setTS = ResolveICall("UnityEngine.Time::set_timeScale(System.Single)");
-    if (setTS) LOGI("TimeScale ready");
+    if (setTS) {
+        LOGI("Speed: TimeScale ready");
+    }
 }
 
 void Mods::SetFly(bool enabled) {
@@ -36,7 +41,9 @@ void Mods::SetNoclip(bool enabled) {
 void Mods::SetGravity(bool enabled) {
     LOGI("Gravity %s", enabled ? "ON" : "OFF");
     void* grav = ResolveICall("UnityEngine.Physics::set_gravity(UnityEngine.Vector3)");
-    if (grav) LOGI("Gravity icall ready");
+    if (grav) {
+        LOGI("Gravity icall ready");
+    }
 }
 
 void Mods::SetSuperJump(bool enabled) {
