@@ -3,7 +3,7 @@
 
 class Mods {
 public:
-    static void ExecuteUniversalMod(const std::string& modName, bool state);
+    static void ExecuteUniversalMod(const std::string& name, bool state);
 
     static void SetLongArms(bool enabled);
     static void SetSpeed(bool enabled);
