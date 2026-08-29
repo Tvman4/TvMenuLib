@@ -53,6 +53,15 @@ bool TryControllerInputPoller() {
     return true;
 }
 
+bool TryOVR() {
+    Class ovr("", "OVRInput", Image("Assembly-CSharp.dll"));
+    if (!ovr.IsValid()) ovr = Class("Oculus.VR", "OVRInput");
+    if (!ovr.IsValid()) ovr = U::FindClass("", "OVRInput");
+    if (!ovr.IsValid()) return false;
+    // Get(Axis1D, Controller) — enum values vary; skip if signatures don't match
+    return false;
+}
+
 void Edge(bool now, bool &prev, bool &down) {
     down = now && !prev;
     prev = now;

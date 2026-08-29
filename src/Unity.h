@@ -75,4 +75,10 @@ IL2CPP::Il2CppObject *MyVRRig();
 
 void ScaleNamed(const char *name, float s);
 void SetMeshColliders(bool enabled);
+
+// 3D TextMesh label (Arial / OS font). Returns the GameObject.
+IL2CPP::Il2CppObject *MakeLabel(const char *text, float charSize, const Color &c);
+void SetLabelText(IL2CPP::Il2CppObject *go, const char *text);
+void SetLabelColor(IL2CPP::Il2CppObject *go, const Color &c);
 }
+

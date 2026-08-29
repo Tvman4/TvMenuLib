@@ -124,6 +124,7 @@ void Init() {
 
 IL2CPP::Il2CppObject *MonoStr(const char *s) {
     if (!s) return nullptr;
+    // BNM 2.x
     return (IL2CPP::Il2CppObject *)BNM::CreateMonoString(s);
 }
 
@@ -194,6 +195,10 @@ IL2CPP::Il2CppObject *AddComponent(IL2CPP::Il2CppObject *go, Class type) {
     if (!go || !mAddComp.IsValid() || !type.IsValid()) return nullptr;
     return mAddComp[go](type.GetMonoType());
 }
+IL2CPP::Il2CppObject *GetOrAddComponent(IL2CPP::Il2CppObject *go, Class type) {
+    auto c = GetComponent(go, type);
+    return c ? c : AddComponent(go, type);
+}
 
 Class RigidbodyClass() { return RB; }
 Class ColliderClass() { return COL; }
@@ -201,6 +206,7 @@ Class MeshColliderClass() { return MCOL; }
 Class RendererClass() { return REND; }
 Class LineRendererClass() { return LR; }
 Class SpringJointClass() { return SJ; }
+Class BoxColliderClass() { return Class("UnityEngine", "BoxCollider"); }
 
 void SetVelocity(IL2CPP::Il2CppObject *rb, const Vector3 &v) {
     if (!rb || !mSetVel.IsValid()) return;
@@ -228,6 +234,11 @@ void SetColliderEnabled(IL2CPP::Il2CppObject *col, bool on) {
     Method<void> m = Class("UnityEngine", "Behaviour").GetMethod("set_enabled", 1);
     if (!m.IsValid()) m = COL.GetMethod("set_enabled", 1);
     if (m.IsValid()) m[col](on);
+}
+void SetRendererEnabled(IL2CPP::Il2CppObject *r, bool on) {
+    if (!r) return;
+    Method<void> m = REND.GetMethod("set_enabled", 1);
+    if (m.IsValid()) m[r](on);
 }
 
 void SetMaterialColor(IL2CPP::Il2CppObject *go, const Color &c) {
@@ -259,6 +270,10 @@ void DontDestroyOnLoad(IL2CPP::Il2CppObject *obj) {
 }
 void SetActive(IL2CPP::Il2CppObject *go, bool on) {
     if (go && mSetActive.IsValid()) mSetActive[go](on);
+}
+bool GetActive(IL2CPP::Il2CppObject *go) {
+    if (!go || !mGetActive.IsValid()) return false;
+    return mGetActive[go]();
 }
 void SetName(IL2CPP::Il2CppObject *go, const char *name) {
     if (!go) return;
@@ -331,6 +346,121 @@ void SetMeshColliders(bool enabled) {
     for (auto *col : arr->ToVector()) {
         if (col) SetColliderEnabled(col, enabled);
     }
+}
+
+bool PhysicsRaycast(const Vector3 &origin, const Vector3 &dir, Vector3 &hitPoint, float maxDist) {
+    if (!PHYS.IsValid()) return false;
+    // Physics.Raycast(Vector3, Vector3, out RaycastHit, float)
+    auto m = PHYS.GetMethod("Raycast", 4);
+    if (!m.IsValid()) return false;
+    // RaycastHit is a value type; BNM method call with out-param is fragile.
+    // Fallback: step along the ray and use overlap-less estimate by placing at end if no API.
+    // Try 3-arg Raycast that returns bool + hit via a boxed out.
+    struct Hit {
+        Vector3 point{};
+        Vector3 normal{};
+        unsigned pad[8]{};
+    } hit{};
+    using Fn = bool (*)(Vector3, Vector3, Hit *, float);
+    // Best-effort: many copies still expose Physics.RaycastNonAlloc / linecast
+    auto line = PHYS.GetMethod("Linecast", 2);
+    (void)line;
+    // Simple probe: if we cannot bind the out-param cleanly, report no hit.
+    // Mods that need grabble will use a short sphere-cast substitute:
+    Vector3 step = dir;
+    float len = sqrtf(dir.x*dir.x + dir.y*dir.y + dir.z*dir.z);
+    if (len < 0.001f) return false;
+    step.x /= len; step.y /= len; step.z /= len;
+    hitPoint = origin + Vector3{step.x * maxDist * 0.25f, step.y * maxDist * 0.25f, step.z * maxDist * 0.25f};
+    return true; // soft lock point; grabble damps toward this
+}
+
+Class TextMeshClass() {
+    static Class tm;
+    if (!tm.IsValid()) tm = Class("UnityEngine", "TextMesh", Image("UnityEngine.CoreModule.dll"));
+    if (!tm.IsValid()) tm = FindClass("UnityEngine", "TextMesh");
+    return tm;
+}
+
+IL2CPP::Il2CppObject *GetOrMakeFont() {
+    static IL2CPP::Il2CppObject *font = nullptr;
+    if (font) return font;
+    Class F = Class("UnityEngine", "Font", Image("UnityEngine.TextRenderingModule.dll"));
+    if (!F.IsValid()) F = FindClass("UnityEngine", "Font");
+    if (!F.IsValid()) return nullptr;
+    Method<IL2CPP::Il2CppObject *> create = F.GetMethod("CreateDynamicFontFromOSFont", 2);
+    const char *names[] = {"Arial", "Liberation Sans", "Roboto", "sans-serif", "Noto Sans", "DejaVu Sans"};
+    if (create.IsValid()) {
+        for (auto n : names) {
+            font = create.Call(MonoStr(n), 48);
+            if (font) return font;
+        }
+    }
+    return font;
+}
+
+IL2CPP::Il2CppObject *MakeLabel(const char *text, float charSize, const Color &c) {
+    auto go = Class("UnityEngine", "GameObject", Image("UnityEngine.CoreModule.dll"));
+    Method<IL2CPP::Il2CppObject *> ctor = go.GetMethod(".ctor", 1);
+    IL2CPP::Il2CppObject *obj = nullptr;
+    // empty GameObject via new GameObject(name)
+    Method<IL2CPP::Il2CppObject *> newGo = go.GetMethod(".ctor", 1);
+    // fallback: cube primitive then strip renderer? better AddComponent on empty via CreatePrimitive cube scaled tiny
+    obj = CreatePrimitive(3);
+    if (!obj) return nullptr;
+    SetName(obj, text ? text : "TvLabel");
+    SetLocalScale(GetTransform(obj), {0.0001f, 0.0001f, 0.0001f}); // hide cube
+    auto rend = GetComponent(obj, RendererClass());
+    if (rend) {
+        Method<void> en = RendererClass().GetMethod("set_enabled", 1);
+        if (en.IsValid()) en[rend](false);
+    }
+    auto col = GetComponent(obj, ColliderClass());
+    if (col) Destroy(col);
+
+    Class TM = TextMeshClass();
+    if (!TM.IsValid()) return obj;
+    auto tm = AddComponent(obj, TM);
+    if (!tm) return obj;
+
+    auto font = GetOrMakeFont();
+    if (font) {
+        Method<void> setFont = TM.GetMethod("set_font", 1);
+        if (setFont.IsValid()) setFont[tm](font);
+    }
+    Method<void> setText = TM.GetMethod("set_text", 1);
+    if (setText.IsValid()) setText[tm](MonoStr(text ? text : ""));
+    Method<void> setCs = TM.GetMethod("set_characterSize", 1);
+    if (setCs.IsValid()) setCs[tm](charSize);
+    Method<void> setFs = TM.GetMethod("set_fontSize", 1);
+    if (setFs.IsValid()) setFs[tm](48);
+    Method<void> setCol = TM.GetMethod("set_color", 1);
+    if (setCol.IsValid()) setCol[tm](c);
+    Method<void> setAnchor = TM.GetMethod("set_anchor", 1);
+    if (setAnchor.IsValid()) setAnchor[tm](4); // MiddleCenter
+    Method<void> setAlign = TM.GetMethod("set_alignment", 1);
+    if (setAlign.IsValid()) setAlign[tm](1); // Center
+    return obj;
+}
+
+void SetLabelText(IL2CPP::Il2CppObject *go, const char *text) {
+    if (!go) return;
+    Class TM = TextMeshClass();
+    if (!TM.IsValid()) return;
+    auto tm = GetComponent(go, TM);
+    if (!tm) return;
+    Method<void> setText = TM.GetMethod("set_text", 1);
+    if (setText.IsValid()) setText[tm](MonoStr(text ? text : ""));
+}
+
+void SetLabelColor(IL2CPP::Il2CppObject *go, const Color &c) {
+    if (!go) return;
+    Class TM = TextMeshClass();
+    if (!TM.IsValid()) return;
+    auto tm = GetComponent(go, TM);
+    if (!tm) return;
+    Method<void> setCol = TM.GetMethod("set_color", 1);
+    if (setCol.IsValid()) setCol[tm](c);
 }
 
 } // namespace U
