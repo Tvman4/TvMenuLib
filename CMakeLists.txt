@@ -37,7 +37,6 @@ add_library(TvMenu SHARED
 
 target_include_directories(TvMenu PRIVATE
     src
-    include
     ${BNM_DIR}/include
     ${BNM_DIR}/external/include
     ${DOBBY_DIR}/include
