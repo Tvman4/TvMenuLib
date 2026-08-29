@@ -4,32 +4,8 @@ static_assert(false, "ByNameModding requires C++20 and above!");
 
 #pragma once
 
-// Unity 2021.3.x (il2cpp 28) — GTAG copies / skids
 #define UNITY_VER 213
 #define UNITY_PATCH_VER 0
-
-#include <android/log.h>
-#include <dobby.h>
-
-template<typename PTR_T, typename NEW_T, typename T_OLD>
-inline void *BasicHook(PTR_T ptr, NEW_T newMethod, T_OLD &oldBytes) {
-    if ((void *)ptr == nullptr) return nullptr;
-    DobbyHook((void *)ptr, (void *)newMethod, (dobby_dummy_func_t *)&oldBytes);
-    return (void *)ptr;
-}
-
-template<typename PTR_T, typename NEW_T, typename T_OLD>
-inline void *BasicHook(PTR_T ptr, NEW_T newMethod, T_OLD &&oldBytes) {
-    if ((void *)ptr == nullptr) return nullptr;
-    void *tmp = nullptr;
-    DobbyHook((void *)ptr, (void *)newMethod, (dobby_dummy_func_t *)&tmp);
-    return (void *)ptr;
-}
-
-template<typename PTR_T>
-inline void Unhook(PTR_T ptr) {
-    if ((void *)ptr != nullptr) DobbyDestroy((void *)ptr);
-}
 
 #define BNM_DEPRECATED
 #define BNM_CLASSES_MANAGEMENT
@@ -50,14 +26,36 @@ inline void Unhook(PTR_T ptr) {
 #define BNM_OBFUSCATE(str) str
 #define BNM_OBFUSCATE_TMP(str) str
 
+#include <dobby.h>
+
+template<typename PTR_T, typename NEW_T, typename T_OLD>
+inline void *BasicHook(PTR_T ptr, NEW_T newMethod, T_OLD &oldBytes) {
+    if ((void *)ptr != nullptr) DobbyHook((void *)ptr, (void *)newMethod, (void **)&oldBytes);
+    return (void *)ptr;
+}
+
+template<typename PTR_T, typename NEW_T, typename T_OLD>
+inline void *BasicHook(PTR_T ptr, NEW_T newMethod, T_OLD &&oldBytes) {
+    if ((void *)ptr != nullptr) DobbyHook((void *)ptr, (void *)newMethod, (void **)&oldBytes);
+    return (void *)ptr;
+}
+
+template<typename PTR_T>
+inline void Unhook(PTR_T ptr) {
+    if ((void *)ptr != nullptr) DobbyDestroy((void *)ptr);
+}
+
+#include <dlfcn.h>
 #define BNM_dlopen dlopen
 #define BNM_dlsym dlsym
 #define BNM_dlclose dlclose
 #define BNM_dladdr dladdr
 
+#include <cstdlib>
 #define BNM_malloc malloc
 #define BNM_free free
 
+#include <android/log.h>
 #define BNM_TAG "TvMenu"
 
 #ifdef BNM_ALLOW_SELF_CHECKS
@@ -95,5 +93,15 @@ inline void Unhook(PTR_T ptr) {
 #define BNM_LOG_WARN(...) ((void)0)
 #define BNM_LOG_WARN_IF(...) ((void)0)
 #endif
+
+namespace BNM {
+#if defined(__LP64__)
+    typedef long BNM_INT_PTR;
+    typedef unsigned long BNM_PTR;
+#else
+    typedef int BNM_INT_PTR;
+    typedef unsigned int BNM_PTR;
+#endif
+}
 
 #define BNM_VER "2.5.2-TvMenu"
