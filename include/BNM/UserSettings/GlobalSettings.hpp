@@ -4,6 +4,7 @@ static_assert(false, "ByNameModding requires C++20 and above!");
 
 #pragma once
 
+// Unity 2021.3.x
 #define UNITY_VER 213
 #define UNITY_PATCH_VER 0
 
