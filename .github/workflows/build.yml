@@ -36,14 +36,14 @@ jobs:
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: |
-          git clone --depth 1 https://github.com/jmpews/Dobby.git third_party/Dobby
+          git clone https://github.com/jmpews/Dobby.git third_party/Dobby
+          git -C third_party/Dobby checkout 0932d69c320e786672361ab53825ba8f4245e9d3
 
-          # NDK clang rejects Mach-O @PAGE/@PAGEOFF. Rewrite to ELF relocs.
           python3 - <<'PY'
           from pathlib import Path
           import re
           root = Path("third_party/Dobby")
-          for p in root.rglob("*.asm"):
+          for p in list(root.rglob("*.asm")) + list(root.rglob("*.S")) + list(root.rglob("*.s")):
               t = p.read_text(errors="ignore")
               n = re.sub(r'([A-Za-z0-9_().]+)@PAGEOFF', r':lo12:\1', t)
               n = re.sub(r'([A-Za-z0-9_().]+)@PAGE', r'\1', n)
@@ -58,7 +58,8 @@ jobs:
             -DANDROID_PLATFORM=android-24 \
             -DANDROID_STL=c++_static \
             -DCMAKE_BUILD_TYPE=Release \
-            -DDOBBY_DEBUG=OFF
+            -DDOBBY_DEBUG=OFF \
+            -DDOBBY_GENERATE_SHARED=OFF
           cmake --build build-dobby --parallel
           DOBBY_LIB=$(find build-dobby third_party/Dobby -name 'libdobby.a' | head -n 1)
           echo "dobby lib: $DOBBY_LIB"
@@ -85,9 +86,10 @@ jobs:
           mkdir -p dist/arm64-v8a
           SO=$(find build -name 'libTvMenu.so' | head -n 1)
           echo "found $SO"
+          test -n "$SO"
           cp "$SO" dist/arm64-v8a/libTvMenu.so
-          llvm-strip-18 dist/arm64-v8a/libTvMenu.so || \
-            $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip dist/arm64-v8a/libTvMenu.so || true
+          STRIP="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip"
+          if [ -x "$STRIP" ]; then "$STRIP" dist/arm64-v8a/libTvMenu.so || true; fi
           ls -lh dist/arm64-v8a/libTvMenu.so
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
