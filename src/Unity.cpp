@@ -124,7 +124,6 @@ void Init() {
 
 IL2CPP::Il2CppObject *MonoStr(const char *s) {
     if (!s) return nullptr;
-    // BNM 2.x
     return (IL2CPP::Il2CppObject *)BNM::CreateMonoString(s);
 }
 
@@ -195,10 +194,6 @@ IL2CPP::Il2CppObject *AddComponent(IL2CPP::Il2CppObject *go, Class type) {
     if (!go || !mAddComp.IsValid() || !type.IsValid()) return nullptr;
     return mAddComp[go](type.GetMonoType());
 }
-IL2CPP::Il2CppObject *GetOrAddComponent(IL2CPP::Il2CppObject *go, Class type) {
-    auto c = GetComponent(go, type);
-    return c ? c : AddComponent(go, type);
-}
 
 Class RigidbodyClass() { return RB; }
 Class ColliderClass() { return COL; }
@@ -206,7 +201,6 @@ Class MeshColliderClass() { return MCOL; }
 Class RendererClass() { return REND; }
 Class LineRendererClass() { return LR; }
 Class SpringJointClass() { return SJ; }
-Class BoxColliderClass() { return Class("UnityEngine", "BoxCollider"); }
 
 void SetVelocity(IL2CPP::Il2CppObject *rb, const Vector3 &v) {
     if (!rb || !mSetVel.IsValid()) return;
@@ -231,14 +225,9 @@ void SetIsKinematic(IL2CPP::Il2CppObject *rb, bool on) {
 
 void SetColliderEnabled(IL2CPP::Il2CppObject *col, bool on) {
     if (!col) return;
-    auto m = Class("UnityEngine", "Behaviour").GetMethod("set_enabled", 1);
+    Method<void> m = Class("UnityEngine", "Behaviour").GetMethod("set_enabled", 1);
     if (!m.IsValid()) m = COL.GetMethod("set_enabled", 1);
     if (m.IsValid()) m[col](on);
-}
-void SetRendererEnabled(IL2CPP::Il2CppObject *r, bool on) {
-    if (!r) return;
-    auto m = REND.GetMethod("set_enabled", 1);
-    if (m.IsValid()) m[r](on);
 }
 
 void SetMaterialColor(IL2CPP::Il2CppObject *go, const Color &c) {
@@ -271,13 +260,9 @@ void DontDestroyOnLoad(IL2CPP::Il2CppObject *obj) {
 void SetActive(IL2CPP::Il2CppObject *go, bool on) {
     if (go && mSetActive.IsValid()) mSetActive[go](on);
 }
-bool GetActive(IL2CPP::Il2CppObject *go) {
-    if (!go || !mGetActive.IsValid()) return false;
-    return mGetActive[go]();
-}
 void SetName(IL2CPP::Il2CppObject *go, const char *name) {
     if (!go) return;
-    auto m = OBJ.GetMethod("set_name", 1);
+    Method<void> m = OBJ.GetMethod("set_name", 1);
     if (m.IsValid()) m[go](MonoStr(name));
 }
 
@@ -308,7 +293,7 @@ IL2CPP::Il2CppObject *GorillaTaggerInstance() {
     Class tagger("", "GorillaTagger", Image("Assembly-CSharp.dll"));
     if (!tagger.IsValid()) tagger = FindClass("", "GorillaTagger");
     if (!tagger.IsValid()) return nullptr;
-    auto inst = tagger.GetMethod("get_Instance", 0);
+    Method<IL2CPP::Il2CppObject *> inst = tagger.GetMethod("get_Instance", 0);
     if (!inst.IsValid()) {
         Field<IL2CPP::Il2CppObject *> f = tagger.GetField("instance");
         if (!f.IsValid()) f = tagger.GetField("Instance");
@@ -337,7 +322,7 @@ void ScaleNamed(const char *name, float s) {
 
 void SetMeshColliders(bool enabled) {
     if (!MCOL.IsValid()) return;
-    auto findAll = OBJ.GetMethod("FindObjectsOfType", 1);
+    Method<IL2CPP::Il2CppObject *> findAll = OBJ.GetMethod("FindObjectsOfType", 1);
     if (!findAll.IsValid()) return;
     auto raw = findAll.Call(MCOL.GetMonoType());
     if (!raw) return;
@@ -346,33 +331,6 @@ void SetMeshColliders(bool enabled) {
     for (auto *col : arr->ToVector()) {
         if (col) SetColliderEnabled(col, enabled);
     }
-}
-
-bool PhysicsRaycast(const Vector3 &origin, const Vector3 &dir, Vector3 &hitPoint, float maxDist) {
-    if (!PHYS.IsValid()) return false;
-    // Physics.Raycast(Vector3, Vector3, out RaycastHit, float)
-    auto m = PHYS.GetMethod("Raycast", 4);
-    if (!m.IsValid()) return false;
-    // RaycastHit is a value type; BNM method call with out-param is fragile.
-    // Fallback: step along the ray and use overlap-less estimate by placing at end if no API.
-    // Try 3-arg Raycast that returns bool + hit via a boxed out.
-    struct Hit {
-        Vector3 point{};
-        Vector3 normal{};
-        unsigned pad[8]{};
-    } hit{};
-    using Fn = bool (*)(Vector3, Vector3, Hit *, float);
-    // Best-effort: many copies still expose Physics.RaycastNonAlloc / linecast
-    auto line = PHYS.GetMethod("Linecast", 2);
-    (void)line;
-    // Simple probe: if we cannot bind the out-param cleanly, report no hit.
-    // Mods that need grabble will use a short sphere-cast substitute:
-    Vector3 step = dir;
-    float len = sqrtf(dir.x*dir.x + dir.y*dir.y + dir.z*dir.z);
-    if (len < 0.001f) return false;
-    step.x /= len; step.y /= len; step.z /= len;
-    hitPoint = origin + Vector3{step.x * maxDist * 0.25f, step.y * maxDist * 0.25f, step.z * maxDist * 0.25f};
-    return true; // soft lock point; grabble damps toward this
 }
 
 } // namespace U
