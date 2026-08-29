@@ -1,0 +1,90 @@
+name: Build libTvMenu.so
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  android-arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup NDK
+        uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: r26b
+          add-to-path: false
+
+      - name: Setup CMake / Ninja
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build
+
+      - name: Fetch BNM-Android
+        run: |
+          mkdir -p third_party
+          git clone --depth 1 https://github.com/ByNameModding/BNM-Android.git third_party/BNM-Android
+          cp include/BNM/UserSettings/GlobalSettings.hpp \
+             third_party/BNM-Android/include/BNM/UserSettings/GlobalSettings.hpp
+
+      - name: Fetch and build Dobby (static arm64)
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: |
+          git clone --depth 1 https://github.com/jmpews/Dobby.git third_party/Dobby
+          cmake -S third_party/Dobby -B build-dobby -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-24 \
+            -DANDROID_STL=c++_static \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DDOBBY_GENERATE_SHARED=OFF \
+            -DDOBBY_DEBUG=OFF
+          cmake --build build-dobby --parallel
+          DOBBY_LIB=$(find build-dobby third_party/Dobby -name 'libdobby.a' | head -n 1)
+          echo "dobby lib: $DOBBY_LIB"
+          cp "$DOBBY_LIB" third_party/libdobby.a
+
+      - name: Configure TvMenu
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-24 \
+            -DANDROID_STL=c++_static \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DANDROID=1
+
+      - name: Build libTvMenu.so
+        run: cmake --build build --parallel
+
+      - name: Collect artifact
+        run: |
+          mkdir -p dist/arm64-v8a
+          SO=$(find build -name 'libTvMenu.so' | head -n 1)
+          echo "found $SO"
+          cp "$SO" dist/arm64-v8a/libTvMenu.so
+          llvm-strip-18 dist/arm64-v8a/libTvMenu.so || \
+            $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip dist/arm64-v8a/libTvMenu.so || true
+          ls -lh dist/arm64-v8a/libTvMenu.so
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+
+      - name: Upload libTvMenu.so
+        uses: actions/upload-artifact@v4
+        with:
+          name: libTvMenu-arm64
+          path: dist/arm64-v8a/libTvMenu.so
+
+      - name: Release asset on tag
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/arm64-v8a/libTvMenu.so
