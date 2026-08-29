@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <BNM/UserSettings/GlobalSettings.hpp>
 #include <BNM/Class.hpp>
 #include <BNM/Field.hpp>
 #include <BNM/Method.hpp>
@@ -19,6 +18,7 @@ namespace U {
 
 void Init();
 bool Ready();
+Class FindClass(const char *ns, const char *name);
 
 IL2CPP::Il2CppObject *MonoStr(const char *s);
 
