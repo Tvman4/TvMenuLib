@@ -16,7 +16,7 @@ bool TryControllerInputPoller() {
     Class poll("", "ControllerInputPoller", Image("Assembly-CSharp.dll"));
     if (!poll.IsValid()) poll = U::FindClass("", "ControllerInputPoller");
     if (!poll.IsValid()) return false;
-    auto instM = poll.GetMethod("get_instance", 0);
+    Method<IL2CPP::Il2CppObject *> instM = poll.GetMethod("get_instance", 0);
     IL2CPP::Il2CppObject *inst = nullptr;
     if (instM.IsValid()) inst = instM.Call();
     if (!inst) {
@@ -51,15 +51,6 @@ bool TryControllerInputPoller() {
         RTrig = readF("rightIndex");
     }
     return true;
-}
-
-bool TryOVR() {
-    Class ovr("", "OVRInput", Image("Assembly-CSharp.dll"));
-    if (!ovr.IsValid()) ovr = Class("Oculus.VR", "OVRInput");
-    if (!ovr.IsValid()) ovr = U::FindClass("", "OVRInput");
-    if (!ovr.IsValid()) return false;
-    // Get(Axis1D, Controller) — enum values vary; skip if signatures don't match
-    return false;
 }
 
 void Edge(bool now, bool &prev, bool &down) {
