@@ -11,6 +11,7 @@ endif()
 set(BNM_DIR ${CMAKE_SOURCE_DIR}/third_party/BNM-Android)
 set(DOBBY_DIR ${CMAKE_SOURCE_DIR}/third_party/Dobby)
 
+# Overlay our Unity 2021.3 + Dobby settings on top of BNM
 configure_file(
     ${CMAKE_SOURCE_DIR}/include/BNM/UserSettings/GlobalSettings.hpp
     ${BNM_DIR}/include/BNM/UserSettings/GlobalSettings.hpp
