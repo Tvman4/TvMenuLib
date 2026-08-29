@@ -134,7 +134,7 @@ void Ghost(bool hide) {
     Class vr("", "VRRig", Image("Assembly-CSharp.dll"));
     if (!vr.IsValid()) vr = U::FindClass("", "VRRig");
     if (!vr.IsValid()) return;
-    auto p = vr.GetProperty("enabled");
+    Property<bool> p = vr.GetProperty("enabled");
     if (p.IsValid()) {
         p.SetInstance(rig);
         p.Set(!hide);
@@ -142,7 +142,7 @@ void Ghost(bool hide) {
     }
     auto r = U::GetComponent(rig, U::RendererClass());
     if (r) {
-        auto m = U::RendererClass().GetMethod("set_enabled", 1);
+        Method<void> m = U::RendererClass().GetMethod("set_enabled", 1);
         if (m.IsValid()) m[r](!hide);
     }
 }
@@ -160,16 +160,13 @@ void Dash(float force, float cd) {
 }
 
 void Grapple(bool left) {
-    auto hand = U::Hand(!left ? true : false);
-    // left=true means left hand
-    hand = U::Hand(left ? false : true);
+    auto hand = U::Hand(left ? false : true);
     auto player = U::PlayerGO();
     auto rb = U::PlayerRB();
     if (!hand || !player || !rb) return;
     bool grab = XR::GetBool(XR::BoolFeature::GripButton, left ? XR::Controller::Left : XR::Controller::Right);
     bool &grabbing = left ? grabbingL : grabbingR;
     Vector3 &pt = left ? grabPtL : grabPtR;
-    IL2CPP::Il2CppObject *&line = left ? lineL : lineR;
 
     auto htr = U::GetTransform(hand);
     auto hp = U::GetPosition(htr);
@@ -177,12 +174,7 @@ void Grapple(bool left) {
 
     if (grab && !grabbing) {
         grabbing = true;
-        float maxd = 60.f;
         pt = {hp.x + fwd.x * 12.f, hp.y + fwd.y * 12.f, hp.z + fwd.z * 12.f};
-        if (!line) {
-            line = player;
-            // visual cube bead at anchor
-        }
     } else if (!grab && grabbing) {
         grabbing = false;
     }
@@ -228,7 +220,6 @@ void Mods::Register() {
     auto &m = WristMenu::Mods();
     if (!m.empty()) return;
 
-    // ---- Movement (user scripts + variants) ----
     AddT("Hand Fly", "Movement", []{ FlyHand(15.f, false); });
     AddT("Hand Fly Fast", "Movement", []{ FlyHand(22.f, false); });
     AddT("Hand Fly Slow", "Movement", []{ FlyHand(8.f, false); });
@@ -359,7 +350,6 @@ void Mods::Register() {
         U::AddForce(rb, {acc.x*0.55f, acc.y*0.55f, acc.z*0.55f}, 3);
     });
 
-    // ---- Player ----
     AddOn("Ghost Monkey", "Player", [](bool on){ Ghost(on); });
     AddOn("Invis Body", "Player", [](bool on){ Ghost(on); });
     AddOn("Long Arms", "Player", [](bool on){ LongArms(on ? 1.75f : 1.f); });
@@ -378,13 +368,8 @@ void Mods::Register() {
         U::SetLocalScale(U::GetTransform(p), on ? Vector3{1.f,2.2f,1.f} : Vector3{1,1,1});
     });
     AddT("Spin", "Player", []{
-        auto p = U::PlayerGO(); if (!p) return;
-        auto tr = U::GetTransform(p);
-        auto e = U::GetRotation(tr);
-        // nudge yaw by applying camera-relative isn't trivial; impulse spin via rb
         auto rb = U::PlayerRB();
         if (rb) U::AddForce(rb, {0.15f,0,0}, 3);
-        (void)e;
     });
     AddBtn("Reset Scale", "Player", [](bool){ ScalePlayer(1.f); LongArms(1.f); });
     AddOn("Kinematic Body", "Player", [](bool on){
@@ -396,9 +381,8 @@ void Mods::Register() {
         if (!p || !h) return;
         U::SetPosition(U::GetTransform(p), U::GetPosition(U::GetTransform(h)));
     });
-    AddT("Head Lamp Pos", "Player", []{ /* placeholder pose helper */ });
+    AddT("Head Lamp Pos", "Player", []{});
 
-    // ---- World ----
     AddOn("Time 0.5x", "World", [](bool on){ U::SetTimeScale(on ? 0.5f : 1.f); });
     AddOn("Time 1.5x", "World", [](bool on){ U::SetTimeScale(on ? 1.5f : 1.f); });
     AddOn("Time 2x", "World", [](bool on){ U::SetTimeScale(on ? 2.f : 1.f); });
@@ -409,18 +393,16 @@ void Mods::Register() {
     AddT("Bounce Grav", "World", []{ U::SetGravity({0, 2.5f,0}); });
     AddT("Sideways Grav", "World", []{ U::SetGravity({6.f,-2.f,0}); });
 
-    // ---- Visual / local ----
     AddOn("Blood Hands", "Visual", [](bool on){
         for (bool r : {false, true}) {
             auto h = U::Hand(r); if (!h) continue;
             U::SetMaterialColor(h, on ? Color{0.72f,0.04f,0.06f,1} : Color{1,1,1,1});
         }
     });
-    AddT("Pulse Pointer", "Visual", []{ /* pointer already blood red */ });
+    AddT("Pulse Pointer", "Visual", []{});
     AddOn("Hide Menu Panel", "Visual", [](bool){});
-    AddBtn("Recreate Menu", "Visual", [](bool){ /* next tick rebuilds if objects lost */ });
+    AddBtn("Recreate Menu", "Visual", [](bool){});
 
-    // ---- Settings / extra movement fills to reach 100 working hooks ----
     AddT("Fly 5", "Movement", []{ FlyHand(5.f, false); });
     AddT("Fly 9", "Movement", []{ FlyHand(9.f, false); });
     AddT("Fly 18", "Movement", []{ FlyHand(18.f, false); });
